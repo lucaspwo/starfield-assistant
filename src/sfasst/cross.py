@@ -329,8 +329,24 @@ def render_report(analyses: list[QuestAnalysis], player_level: int | None) -> st
         lines.append(f"Nível do jogador: {player_level}")
     lines.append("=" * 72)
     lines.append("")
-    lines.append("AVISO: o cruzamento com inventário usa apenas Player.ShowInventory.")
-    lines.append("Itens em ship cargo / Lodge / outposts NÃO são considerados ainda.")
+    # Sumarizar containers vistos para o leitor saber o que entrou no cálculo
+    containers_seen: dict[str, int] = {}
+    for a in analyses:
+        for o in a.objectives:
+            im = o.get("inventory_match")
+            if im:
+                for e in im["inventory_entries"]:
+                    containers_seen[e["container"]] = (
+                        containers_seen.get(e["container"], 0) + 1
+                    )
+    if containers_seen:
+        lines.append(
+            "Containers consultados (com itens casando objetivos): "
+            + ", ".join(f"{c} ({n})" for c, n in sorted(containers_seen.items()))
+        )
+    lines.append(
+        "Atenção: containers não dumpados (Lodge safe, outposts) não entram na conta."
+    )
     lines.append("")
 
     for bucket in ("ready", "almost", "in_progress", "stuck", "level_gated"):
@@ -351,9 +367,17 @@ def render_report(analyses: list[QuestAnalysis], player_level: int | None) -> st
                     tag = "[opc] " + tag
                 line = f"    - {tag} {p['raw']}"
                 if im:
+                    by_container: dict[str, int] = {}
+                    for e in im["inventory_entries"]:
+                        by_container[e["container"]] = (
+                            by_container.get(e["container"], 0) + e["count"]
+                        )
+                    parts = ", ".join(
+                        f"{c}: {n}" for c, n in sorted(by_container.items())
+                    ) or "—"
                     line += (
-                        f"  → carry: {im['inventory_count']}"
-                        f" / falta {im['shortfall']}"
+                        f"  → tenho [{parts}], total {im['inventory_count']}"
+                        f", falta {im['shortfall']}"
                     )
                 lines.append(line)
             lines.append("")

@@ -11,5 +11,11 @@ ShowQuestTargets
 ; --- Inventário do jogador ---
 Player.ShowInventory
 
+; --- Cargo da nave principal ---
+; RefID dinâmico (FF...) — válido enquanto este save estiver carregado.
+; Trocar se mudar de nave / fizer NG+. Como descobrir: console + clicar no
+; container, ler RefID no topo da tela.
+FF02FF39.ShowInventory
+
 ; Marcador de fim para o parser detectar término do dump
 echo === STARFIELD_ASSISTANT_DUMP_END ===

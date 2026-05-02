@@ -113,6 +113,7 @@ class InventoryItem:
     name: str
     form_id: str
     annotation: str = ""  # "Worn", "Worn: RightHand", "Quest Item", ""
+    container: str = "player"  # "player" | "<RefID hex>" | rótulo livre
 
 
 @dataclass
@@ -135,6 +136,7 @@ def parse(log_path: Path) -> ParseResult:
     lines = text.splitlines()
 
     section: str | None = None  # "quests" | "objectives" | "targets" | "inventory"
+    inventory_container: str = "player"  # rótulo do container atual
 
     quests_flags: list[QuestFlag] = []
     quests_objectives: list[QuestObjectives] = []
@@ -180,6 +182,12 @@ def parse(log_path: Path) -> ParseResult:
                 ".showinventory"
             ):
                 section = "inventory"
+                # rótulo do container = prefixo antes do "." (ou "player" se vazio)
+                if "." in cmd:
+                    prefix = cmd.split(".", 1)[0].strip()
+                    inventory_container = prefix or "player"
+                else:
+                    inventory_container = "player"
             else:
                 section = None
             continue
@@ -255,6 +263,7 @@ def parse(log_path: Path) -> ParseResult:
                         name=m.group(2).strip(),
                         form_id=m.group(3).upper(),
                         annotation=(m.group(4) or "").strip(),
+                        container=inventory_container,
                     )
                 )
             continue
