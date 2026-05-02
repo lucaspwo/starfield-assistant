@@ -1,0 +1,231 @@
+//------------------------------------------------
+//--- 010 Editor v14.0.1 Binary Template
+//
+//      File: SFS-decompressed.bt
+//   Authors: Simon Davies (insomnious) & Nexus Mods
+//   Version: 1.0.0
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+
+int isGamePlugin( char name[] ) 
+{   
+    if( Strcmp(name, "Starfield.esm") == 0 ) return true;
+    if( Strcmp(name, "Constellation.esm") == 0 ) return true;
+    if( Strcmp(name, "OldMars.esm") == 0 ) return true;
+    if( Strcmp(name, "BlueprintShips-Starfield.esm") == 0 ) return true;
+    if( Strcmp(name, "SFBGS007.esm") == 0 ) return true;
+    if( Strcmp(name, "SFBGS008.esm") == 0 ) return true;
+    if( Strcmp(name, "SFBGS006.esm") == 0 ) return true;
+    if( Strcmp(name, "SFBGS003.esm") == 0 ) return true;
+    
+    return false;
+}
+
+int isCreationPlugin( char name[] ) 
+{   
+    //if( Strcmp(name, "sfbgs00a_a.esm") == 0 ) return true;
+    //if( Strcmp(name, "sfbgs023.esm") == 0 ) return true;
+    
+    local int offset = FTell();
+    
+    local ushort nextShort = ReadShort();
+    
+    if ( nextShort != 0 ) return true;                       
+    
+    return false;
+}
+
+int isCreation( char name[] ) 
+{   
+    if( Strstr(name, ".esm") > -1 ) 
+        return false;
+    
+    return true;
+}
+
+
+typedef struct {
+    ushort size;
+    uchar text[size];
+} QSTRING;
+
+typedef struct {
+    uint engineVersion; 
+    ubyte saveVersion;
+    uint saveNumber; 
+    ushort playerNameSize;
+    char playerName[playerNameSize];
+    uint playerLevel;
+    ushort playerLocationSize;
+    char playerLocation[playerLocationSize];
+    ushort playtimeSize;
+    char playtime[playtimeSize];
+    ushort raceNameSize;
+    char raceName[raceNameSize];
+    ushort gender;
+    float experience;
+    float experienceRequired;
+    uint64 time;
+    byte padding[8];
+    uint unknown;
+} HEADER;
+
+typedef struct {
+    ubyte saveVersion;    
+    ushort currentGameVersionSize;
+    char currentGameVersion[currentGameVersionSize];
+    ushort createdGameVersionSize;
+    char createdGameVersion[createdGameVersionSize];
+    ushort pluginInfoSize;
+} INFO;
+
+typedef struct {
+        
+    ushort pluginNameSize;
+    char pluginName[pluginNameSize]; 
+    
+    // if saveVersion is 140 or more, it has a byte to say if we have extra info
+    // if less than 140, then we need to use game plugin names to check
+    
+    if( header.saveVersion >= 140 ) {
+             
+        ubyte extraInfo;
+        
+        if ( extraInfo == 1 ) { 
+                       
+            ushort creationNameSize;
+            char creationName[creationNameSize]; 
+            ushort creationIdSize;
+            char creationId[creationIdSize];            
+            ushort flagsSize;
+            byte flags[flagsSize];
+            byte achivementFriendly;
+                       
+            Printf("%s is a plugin\n", pluginName);
+            
+        } else {
+            
+            Printf("%s is a game plugin\n", pluginName); 
+        }       
+        
+    } else {
+        
+        if( !isGamePlugin(pluginName) ) {
+        
+            // isn't game plugin so we are expecting some extra info
+                    
+            if(header.saveVersion >= 122) { // newer save format support creations and have extra data
+                ushort creationNameSize;
+                char creationName[creationNameSize]; 
+                ushort creationIdSize;
+                char creationId[creationIdSize];            
+                ushort flagsSize;
+                byte flags[flagsSize];
+                byte achivementFriendly;
+            }
+            
+            Printf("%s is a plugin\n", pluginName);       
+        
+        } else {
+            
+            Printf("%s is a game plugin\n", pluginName); 
+        } 
+    }
+        
+    
+    
+} PLUGIN <name=pluginName>;
+
+typedef struct {
+    ubyte unknown0;
+    ubyte count0;
+    
+    ubyte pluginCount;
+    Printf("===== plugins (%d)\n", pluginCount);
+    PLUGIN plugins[pluginCount] <optimize=false>;
+    
+    ushort lightPluginCount;
+    Printf("===== light plugins (%d)\n", lightPluginCount);
+    PLUGIN lightPlugins[lightPluginCount] <optimize=false>;
+    
+    if(header.saveVersion >= 122) { // newer save format support medium plugins        
+        uint mediumPluginCount;
+        Printf("===== medium plugins (%d)\n", mediumPluginCount); 
+        PLUGIN mediumPlugins[mediumPluginCount] <optimize=false>;
+    }
+    
+} PLUGIN_INFO;
+
+typedef struct {    
+    ushort unknown0;
+    uint pointer0;
+    uint pointer1;
+    uint pointer2;
+    uint pointer3;
+    uint pointer4; 
+    uint pointer5;
+    uint pointer6;
+    uint pointer7;
+    uint pointer8;
+    uint pointer9;
+    uint pointer10;
+    uint pointer11; 
+    byte padding[52];    
+} NEW_BLOCK;
+
+typedef struct {    
+    uint pointer0;
+    uint stringsArrayOffset; // strings array offset?
+    uint unknown0;   
+} NEW_BLOCK2;
+
+typedef struct {    
+    uint unknown0;   
+} NEW_BLOCK3;
+
+typedef struct {    
+    byte unknown0[18];
+    byte unknown;   
+    byte unknown1[37];
+} NEW_BLOCK4 <size=56>;
+
+
+typedef struct {  
+    ushort arrayCount;
+    QSTRING strings[arrayCount] <optimize=false>; 
+} STRINGS_ARRAY;
+
+// actual file
+
+char magic[12];    //0x04034b50 
+uint headerSize;   // starting after this int
+HEADER header;
+INFO info;
+
+if(header.saveVersion < 122) { // newer save format support creations and have extra data       
+      
+    Printf("Old save version (%d)\n", header.saveVersion);
+    Warning("Old save version (%d)", header.saveVersion);
+}
+
+PLUGIN_INFO pluginInfo;
+NEW_BLOCK newBlock;
+NEW_BLOCK2 newBlock2;
+
+// unknown block
+FSeek(newBlock.pointer0);
+NEW_BLOCK3 newBlock3;
+
+// unknown block
+FSeek(newBlock.pointer1);
+NEW_BLOCK4 newBlock4;
+
+// start of strings array?
+FSeek(newBlock2.stringsArrayOffset);
+STRINGS_ARRAY stringsArray;

@@ -1,0 +1,15 @@
+; Starfield console batch — dump de estado do jogador
+; Uso no jogo: abra o console (~) e digite:  bat dump
+; Requer: SFSE + "Console Output To File" (Nexus mod 3142)
+; Saída em: <Starfield>/Data/SFSE/plugins/sfse_plugin_console.log
+
+; --- Quests ---
+ShowQuests
+ShowQuestObjectives
+ShowQuestTargets
+
+; --- Inventário do jogador ---
+Player.ShowInventory
+
+; Marcador de fim para o parser detectar término do dump
+echo === STARFIELD_ASSISTANT_DUMP_END ===

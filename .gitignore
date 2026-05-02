@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# logs e dumps locais (são pessoais)
+data/logs/*.log
+data/saves/*.sfs
+data/raw/*.raw
+data/raw/*.dat
+out/
+
+# editores
+.idea/
+.vscode/
+*.swp
+.DS_Store
