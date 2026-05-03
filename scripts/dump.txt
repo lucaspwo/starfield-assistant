@@ -12,13 +12,8 @@ ShowQuestTargets
 Player.ShowInventory
 
 ; --- Containers extras ---
-; Limitação conhecida: containers como o cofre do Lodge e o cargo da
-; nave usam menus especiais — o RefID que aparece ao mirar/interagir é
-; do ativador (objeto de cena), não do container interno. Tentativas
-; com .ShowInventory retornam vazio e .GetItemCount responde "Calling
-; Reference is not a Container Object". Resolver requer Papyrus
-; (script no esm) ou descoberta dos editor IDs dos containers reais.
-;
-; Quando souber o RefID válido de um container, adicione uma linha:
-;   <RefID>.ShowInventory  ; rótulo do container
-; Refs com prefixo "00" são estáticas; "FF" são dinâmicas.
+; Cofre do quarto pessoal no Lodge (Nova Atlântida).
+; FormID estático do CONTAINER (00266E81), distinto do ativador visual
+; (0014BCEC) que aparece ao mirar e não aceita ShowInventory. Achado
+; documentado em docs/limitacao-containers.md.
+00266E81.ShowInventory

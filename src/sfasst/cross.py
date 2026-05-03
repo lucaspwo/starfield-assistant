@@ -321,31 +321,25 @@ BUCKET_LABELS = {
 }
 
 
-def render_report(analyses: list[QuestAnalysis], player_level: int | None) -> str:
+def render_report(
+    analyses: list[QuestAnalysis],
+    player_level: int | None,
+    inventory: list[dict] | None = None,
+) -> str:
     lines: list[str] = []
     lines.append("=" * 72)
     lines.append("RELATÓRIO DE QUESTS ATIVAS")
     if player_level:
         lines.append(f"Nível do jogador: {player_level}")
+    if inventory:
+        from collections import Counter
+        c = Counter(i["container"] for i in inventory)
+        parts = ", ".join(f"{k} ({n})" for k, n in sorted(c.items()))
+        lines.append(f"Containers dumpados: {parts}")
     lines.append("=" * 72)
     lines.append("")
-    # Sumarizar containers vistos para o leitor saber o que entrou no cálculo
-    containers_seen: dict[str, int] = {}
-    for a in analyses:
-        for o in a.objectives:
-            im = o.get("inventory_match")
-            if im:
-                for e in im["inventory_entries"]:
-                    containers_seen[e["container"]] = (
-                        containers_seen.get(e["container"], 0) + 1
-                    )
-    if containers_seen:
-        lines.append(
-            "Containers consultados (com itens casando objetivos): "
-            + ", ".join(f"{c} ({n})" for c, n in sorted(containers_seen.items()))
-        )
     lines.append(
-        "Atenção: containers não dumpados (Lodge safe, outposts) não entram na conta."
+        "Aviso: cargo da nave e containers de outposts ainda não são dumpados."
     )
     lines.append("")
 
@@ -426,7 +420,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps([asdict(a) for a in analyses],
                          ensure_ascii=False, indent=2))
     else:
-        print(render_report(analyses, player_level=level))
+        print(render_report(analyses, player_level=level,
+                            inventory=parsed_json.get("inventory")))
 
     return 0
 
