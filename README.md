@@ -12,8 +12,9 @@ Detalhes em [`docs/decisao-abordagem.md`](docs/decisao-abordagem.md).
 **Cobertura:**
 - ✅ Quests ativas com objetivos (DISPLAYED no journal)
 - ✅ Inventário do jogador (carry)
+- ✅ Cofre do Lodge e qualquer container estático cujo FormID seja conhecido
 - ✅ Cruzamento materiais × inventário com scoring de esforço
-- ❌ Cargo da nave / cofre do Lodge — limitação conhecida
+- ❌ Cargo da nave — bloqueado por design do engine
   (ver [`docs/limitacao-containers.md`](docs/limitacao-containers.md))
 
 ## Como funciona

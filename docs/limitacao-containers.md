@@ -1,10 +1,13 @@
-# Limitação: containers da nave e do Lodge
+# Containers: estado da arte
 
 ## Resumo
 
-Não é possível ler o conteúdo do **cargo da nave** nem do **cofre do quarto
-pessoal no Lodge** apenas via comandos de console + Console Output To File.
-Ambos usam menus especiais cujo container interno **não é exposto ao console**.
+| Container | Suporte | Como |
+|---|---|---|
+| Player carry | ✅ | `Player.ShowInventory` |
+| Cofre do Lodge | ✅ | `00266E81.ShowInventory` (FormID estático do container) |
+| Outras estáticas (outpost storage, baús, faction safes) | ✅ via FormID | mesmo padrão: descobrir o FormID e adicionar no `dump.txt` |
+| **Cargo da nave** | ❌ | bloqueado por design — Bethesda não expõe |
 
 ## Investigação
 
@@ -16,22 +19,44 @@ Ambos usam menus especiais cujo container interno **não é exposto ao console**
 - Interagir com o cargo via menu da nave + `getselectedref` retorna `None`
   (o menu não passa por seleção de ref)
 
-### Cofre do Lodge
+### Cofre do Lodge — RESOLVIDO
 
-- Mirar no cofre com console aberto dá ref `0014BCEC`
-- Interagir com o cofre + fechar UI + `getselectedref` retorna o **mesmo**
-  `0014BCEC`
-- `0014BCEC.ShowInventory` retorna vazio
-- `0014BCEC.GetLinkedRef` retorna `(00000000)` (sem ref linkada)
+- Mirar no cofre com console aberto dá ref `0014BCEC` — **ativador visual,
+  não aceita ShowInventory**
 - `0014BCEC.GetItemCount 0000000F` responde:
 
   ```
   Calling Reference is not a Container Object
   ```
 
-  Confirmação textual de que o ref é o **ativador/decoração**, não o
-  container interno. O Starfield (diferente do Skyrim) não expõe a relação
-  ativador→container via `GetLinkedRef`.
+- O **container real** é o FormID estático `00266E81` (documentado pela
+  comunidade Bethesda). `00266E81.ShowInventory` lista os 64 itens
+  efetivamente guardados.
+
+**Lição**: o Starfield (diferente do Skyrim) não expõe a relação
+ativador → container via `GetLinkedRef`. Quando `ShowInventory` falha
+silenciosamente, vale procurar o FormID do container real em wikis
+ou via xEdit/SF1Edit.
+
+### Cargo da nave — BLOQUEADO POR DESIGN
+
+Investigação no [Papyrus Index](https://papyrus.bellcube.dev/starfield/script/spaceshipreference/)
+confirma: o script `SpaceshipReference` não expõe **nenhuma** função pra
+obter o container de cargo. Existe `OpenInventory()` mas só abre a UI; não
+retorna ObjectReference.
+
+Implicações:
+- `<shipref>.ShowInventory` retorna vazio (cargo não é inventário direto do casco)
+- Não há FormID estático de "current ship cargo" — é um runtime instance
+  que muda quando o jogador troca de home ship
+- A relação ship → cargo está encapsulada no engine, fora do alcance Papyrus
+
+**Único caminho técnico**: plugin SFSE em C++ que acessa a memória do jogo
+diretamente. Investimento desproporcional ao escopo do projeto.
+
+**Workaround prático**: antes do `bat dump`, no menu da nave fazer "Pegar
+tudo" do cargo → tudo vai pro player carry → `bat dump` captura → depois
+"Guardar tudo" volta. Pesado mas funciona.
 
 ### `GetBaseObject` não existe no Starfield
 
@@ -47,7 +72,7 @@ query como prova de que o ref aceita inventário.
 
 ## Decisão atual
 
-Tratar containers como **fora de escopo do MVP**. O `dump.txt` aceita refs
-de containers extras quando soubermos os corretos, e o parser/cross já
-lidam com múltiplos containers. Quando uma das vias acima for explorada,
-os refs entram no batch sem mudança no resto do pipeline.
+- **Containers estáticos**: suportados. Adicionar `<FormID>.ShowInventory`
+  no `dump.txt` pra qualquer container do mundo cujo FormID seja conhecido.
+- **Cargo da nave**: pulando. Custo de implementar (SFSE C++ plugin) não
+  compensa o benefício.
