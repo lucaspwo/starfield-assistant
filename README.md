@@ -9,6 +9,13 @@ Pivot de parsing direto do `.sfs` (formato proprietário, change forms ainda nã
 documentados publicamente) para captura runtime via **SFSE + Console Output To File**.
 Detalhes em [`docs/decisao-abordagem.md`](docs/decisao-abordagem.md).
 
+**Cobertura:**
+- ✅ Quests ativas com objetivos (DISPLAYED no journal)
+- ✅ Inventário do jogador (carry)
+- ✅ Cruzamento materiais × inventário com scoring de esforço
+- ❌ Cargo da nave / cofre do Lodge — limitação conhecida
+  (ver [`docs/limitacao-containers.md`](docs/limitacao-containers.md))
+
 ## Como funciona
 
 ```

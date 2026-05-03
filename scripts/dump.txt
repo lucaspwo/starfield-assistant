@@ -12,14 +12,13 @@ ShowQuestTargets
 Player.ShowInventory
 
 ; --- Containers extras ---
-; Para adicionar containers: descobrir o RefID mirando no container com o
-; console aberto (ID aparece no topo da tela). Refs estáticas começam com
-; "00" e são estáveis entre saves; refs dinâmicas começam com "FF" e
-; podem mudar (NG+, troca de nave).
-
-; Cofre do quarto pessoal no The Lodge (Nova Atlântida)
-0014BCEC.ShowInventory
-
-; Cargo da nave: ainda não suportado — `<ShipRef>.ShowInventory` retorna
-; vazio porque o cargo é acessado via menu da nave (não via seleção de
-; ref). Resolver no futuro requer um script Papyrus dedicado.
+; Limitação conhecida: containers como o cofre do Lodge e o cargo da
+; nave usam menus especiais — o RefID que aparece ao mirar/interagir é
+; do ativador (objeto de cena), não do container interno. Tentativas
+; com .ShowInventory retornam vazio e .GetItemCount responde "Calling
+; Reference is not a Container Object". Resolver requer Papyrus
+; (script no esm) ou descoberta dos editor IDs dos containers reais.
+;
+; Quando souber o RefID válido de um container, adicione uma linha:
+;   <RefID>.ShowInventory  ; rótulo do container
+; Refs com prefixo "00" são estáticas; "FF" são dinâmicas.
