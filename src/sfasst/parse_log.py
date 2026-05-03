@@ -45,6 +45,11 @@ RE_TGT_LINE = re.compile(
     r"Intermediate Reference:\s*(\S*)\s*\(([0-9A-Fa-f]{8})\)\s*$"
 )
 
+# Player.GetLevel: `GetLevel >> 32.00`
+# Player.GetXPForNextLevel: `GetXPForNextLevel >> 200.00` (algo similar)
+# Player.GetPerkRank: `GetPerkRank >> 2.00`
+RE_NUMERIC_RESULT = re.compile(r"^(\w+)\s*>>\s*(-?\d+(?:\.\d+)?)$")
+
 # Player.ShowInventory:
 #   `1 - Orion (002773C8) `
 #   `1 - Spacesuit_MS04_Mantis_Helmet (0016640A)  - Worn`
@@ -117,6 +122,14 @@ class InventoryItem:
 
 
 @dataclass
+class SkillRank:
+    form_id: str
+    name: str
+    tree: str
+    rank: int
+
+
+@dataclass
 class ParseResult:
     captured_at: str
     source_log: str
@@ -124,6 +137,9 @@ class ParseResult:
     quests_objectives: list[QuestObjectives]
     quests_targets: list[QuestTargetGroup]
     inventory: list[InventoryItem]
+    player_level: int | None = None
+    player_xp_for_next_level: int | None = None
+    skills: list[SkillRank] = field(default_factory=list)
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -131,17 +147,39 @@ class ParseResult:
 # ──────────────────────────────────────────────────────────────────────
 
 
+def _load_skill_index() -> dict[str, tuple[str, str]]:
+    """Carrega data/skills.tsv → {form_id_upper: (name, tree)}."""
+    tsv = Path(__file__).resolve().parent.parent.parent / "data" / "skills.tsv"
+    out: dict[str, tuple[str, str]] = {}
+    if not tsv.exists():
+        return out
+    for raw in tsv.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("form_id"):
+            continue
+        parts = line.split("\t")
+        if len(parts) >= 3:
+            out[parts[0].upper()] = (parts[1], parts[2])
+    return out
+
+
 def parse(log_path: Path) -> ParseResult:
     text = log_path.read_text(encoding="utf-8", errors="replace")
     lines = text.splitlines()
+    skill_index = _load_skill_index()
 
     section: str | None = None  # "quests" | "objectives" | "targets" | "inventory"
     inventory_container: str = "player"  # rótulo do container atual
+    pending_perk_form_id: str | None = None  # cmd era GetPerkRank <FormID>; espera resposta
+    pending_numeric_kind: str | None = None  # "level" | "xp_next" | "perk"
 
     quests_flags: list[QuestFlag] = []
     quests_objectives: list[QuestObjectives] = []
     quests_targets: list[QuestTargetGroup] = []
     inventory: list[InventoryItem] = []
+    skills: list[SkillRank] = []
+    player_level: int | None = None
+    player_xp_for_next_level: int | None = None
 
     # estado para parsing multilinha
     current_quest_obj: QuestObjectives | None = None
@@ -188,6 +226,18 @@ def parse(log_path: Path) -> ParseResult:
                     inventory_container = prefix or "player"
                 else:
                     inventory_container = "player"
+            elif "getlevel" in cmd_lower:
+                section = "numeric"
+                pending_numeric_kind = "level"
+            elif "getxpfornextlevel" in cmd_lower:
+                section = "numeric"
+                pending_numeric_kind = "xp_next"
+            elif "getperkrank" in cmd_lower:
+                section = "numeric"
+                pending_numeric_kind = "perk"
+                # extrair o FormID do comando: "Player.GetPerkRank 002C2C5A"
+                tokens = cmd.split()
+                pending_perk_form_id = tokens[-1].upper() if tokens else None
             else:
                 section = None
             continue
@@ -268,6 +318,28 @@ def parse(log_path: Path) -> ParseResult:
                 )
             continue
 
+        if section == "numeric":
+            m = RE_NUMERIC_RESULT.match(line)
+            if m:
+                value = int(float(m.group(2)))
+                if pending_numeric_kind == "level":
+                    player_level = value
+                elif pending_numeric_kind == "xp_next":
+                    player_xp_for_next_level = value
+                elif pending_numeric_kind == "perk" and pending_perk_form_id:
+                    name, tree = skill_index.get(
+                        pending_perk_form_id, (pending_perk_form_id, "?")
+                    )
+                    skills.append(SkillRank(
+                        form_id=pending_perk_form_id,
+                        name=name, tree=tree, rank=value,
+                    ))
+            # após receber a resposta numérica, dessa "subseção" se foi
+            section = None
+            pending_numeric_kind = None
+            pending_perk_form_id = None
+            continue
+
     flush_quest_obj()
     flush_target_group()
 
@@ -278,6 +350,9 @@ def parse(log_path: Path) -> ParseResult:
         quests_objectives=quests_objectives,
         quests_targets=quests_targets,
         inventory=inventory,
+        player_level=player_level,
+        player_xp_for_next_level=player_xp_for_next_level,
+        skills=skills,
     )
 
 
@@ -302,11 +377,16 @@ def _print_summary(result: ParseResult) -> None:
     n_displayed = sum(1 for q in result.quests_objectives if q.displayed)
     n_targets = len(result.quests_targets)
     n_inv = len(result.inventory)
+    n_skills = sum(1 for s in result.skills if s.rank > 0)
+    extra = ""
+    if result.player_level is not None:
+        extra = f", nível {result.player_level}, {n_skills}/{len(result.skills)} skills com rank"
     print(
         f"resumo: {len(result.quests_flags)} quest flags ({n_on} On), "
         f"{len(result.quests_objectives)} blocos de objetivos "
         f"({n_active} ativas, {n_displayed} no journal), "
-        f"{n_targets} quests com markers, {n_inv} itens no inventário",
+        f"{n_targets} quests com markers, {n_inv} itens no inventário"
+        f"{extra}",
         file=sys.stderr,
     )
 

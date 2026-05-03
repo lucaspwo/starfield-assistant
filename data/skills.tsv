@@ -1,0 +1,83 @@
+form_id	name	tree
+002C2C5A	Aneutronic Fusion	Tech
+0027DF94	Armor Penetration	Combat
+002C5560	Astrodynamics	Tech
+0027CBBA	Crippling	Combat
+0027CBBB	Astrophysics	Science
+0027B9ED	Automated Weapon Systems	Tech
+002CE2C2	Ballistic Weapon Systems	Tech
+002CFCAB	Ballistics	Combat
+0008C3EE	Boost Assault Training	Combat
+00146C2C	Boost Pack Training	Physical
+002C5557	Botany	Science
+002C59DF	Boxing	Physical
+0028AE14	Cellular Regeneration	Physical
+002CE2C0	Chemistry	Science
+002C5A8E	Commerce	Social
+002C555E	Concealment	Physical
+002CFCAF	Deception	Social
+002CE2A0	Decontamination	Science
+002C5556	Demolitions	Combat
+002C59E1	Diplomacy	Social
+002CFCB0	Dueling	Combat
+002C53B2	EM Weapon Systems	Tech
+002C59E2	Energy Weapon Dissipation	Combat
+002C59DB	Energy Weapon Systems	Tech
+002CE2DE	Engine Systems	Tech
+0028AE17	Environmental Conditioning	Physical
+002CE2DD	Fitness	Physical
+002C5A94	Gastronomy	Science
+002CE29F	Geology	Science
+0028AE29	Gymnastics	Physical
+00147E38	Heavy Weapons Certification	Combat
+0027DF96	Incapacitation	Combat
+002C59DE	Intimidation	Social
+002C53AE	Isolation	Social
+002C555D	Instigation	Social
+002C59DD	Lasers	Combat
+002C890D	Leadership	Social
+002C5555	Manipulation	Social
+002C890B	Marksmanship	Combat
+002C5554	Martial Arts	Physical
+002CE2DF	Medicine	Science
+002C5558	Missile Weapon Systems	Tech
+002C555F	Negotiation	Social
+002C53B4	Neurostrikes	Combat
+002CFCAD	Nutrition	Physical
+002C59E0	Outpost Engineering	Science
+0023826F	Outpost Management	Social
+002CFCAE	Pain Tolerance	Physical
+002C2C5B	Particle Beam Weapon Systems	Tech
+0027BAFD	Particle Beams	Combat
+00143B6B	Payloads	Tech
+0022EC82	Persuasion	Social
+002CFCAC	Piloting	Tech
+002080FF	Pistol Certification	Combat
+0027CBC2	Planetary Habitation	Science
+002C555A	Rapid Reloading	Combat
+0028AE13	Rejuvenation	Physical
+002C555C	Research Methods	Science
+002CE2E0	Rifle Certification	Combat
+002C5553	Robotics	Tech
+002CFCB1	Scanning	Science
+0028B853	Scavenging	Physical
+002CE2E2	Security	Tech
+002C53AF	Sharpshooting	Combat
+002C2C59	Shield Systems	Tech
+002C53B3	Ship Command	Tech
+0027DF97	Shotgun Certification	Combat
+002C53B1	Sniper Certification	Combat
+0027CBC3	Spacesuit Design	Science
+0004CE2D	Special Projects	Science
+002C59DC	Starship Design	Tech
+002AC953	Starship Engineering	Tech
+002CFCB2	Stealth	Physical
+0027CBC1	Surveying	Science
+002C59DA	Targeting	Combat
+002C5559	Targeting Control Systems	Tech
+002C555B	Theft	Social
+002C890C	Weapon Engineering	Science
+002C59D9	Weight Lifting	Physical
+002CE2E1	Wellness	Physical
+002C53B0	Xenosociology	Social
+002C5552	Zoology	Science

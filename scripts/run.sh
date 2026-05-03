@@ -48,3 +48,10 @@ fi
 
 # 5. relatório (passa argumentos extras como --json, -o, --player-level)
 PYTHONPATH="$REPO/src" python3 -m sfasst.cross "$JSON" "${SAVE_ARG[@]}" "$@"
+
+# 6. relatório de skills, se houver
+SKILLS_COUNT=$(python3 -c "import json; d=json.load(open('$JSON')); print(len(d.get('skills',[])))")
+if [[ "$SKILLS_COUNT" -gt 0 ]]; then
+    echo
+    PYTHONPATH="$REPO/src" python3 -m sfasst.skills_report "$JSON" --owned-only
+fi
