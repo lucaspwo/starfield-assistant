@@ -9,8 +9,22 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-GAME_LOG="/mnt/c/Program Files (x86)/Steam/steamapps/common/Starfield/Data/SFSE/plugins/sfse_plugin_console.log"
-SAVES_DIR="/mnt/c/Users/lucas/OneDrive/Documents/my games/Starfield/Saves"
+
+# Carrega configuração local (paths do jogo). Cria .env a partir de
+# .env.example na primeira execução.
+if [[ -f "$REPO/.env" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "$REPO/.env"
+    set +a
+elif [[ -f "$REPO/.env.example" ]]; then
+    echo "erro: $REPO/.env não existe." >&2
+    echo "       cp $REPO/.env.example $REPO/.env  e edite os caminhos." >&2
+    exit 1
+fi
+
+GAME_LOG="${STARFIELD_GAME_LOG:?defina STARFIELD_GAME_LOG no .env}"
+SAVES_DIR="${STARFIELD_SAVES_DIR:?defina STARFIELD_SAVES_DIR no .env}"
 LOG_DIR="$REPO/data/logs"
 OUT_DIR="$REPO/out"
 
@@ -54,4 +68,13 @@ SKILLS_COUNT=$(python3 -c "import json; d=json.load(open('$JSON')); print(len(d.
 if [[ "$SKILLS_COUNT" -gt 0 ]]; then
     echo
     PYTHONPATH="$REPO/src" python3 -m sfasst.skills_report "$JSON" --owned-only
+    echo
+    PYTHONPATH="$REPO/src" python3 -m sfasst.skill_suggestions "$JSON" --owned-only
+    echo
+    PYTHONPATH="$REPO/src" python3 -m sfasst.skill_priorities "$JSON" --top 10
 fi
+
+# 7. sugestões de pesquisa (estático; rastreio de pesquisa em andamento
+# fica pra depois — ver docs/backlog.md)
+echo
+PYTHONPATH="$REPO/src" python3 -m sfasst.research_suggestions "$JSON" --accessible-only

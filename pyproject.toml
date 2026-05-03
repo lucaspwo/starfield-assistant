@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "starfield-assistant"
+version = "1.0.0"
+description = "Assistente local que lê o estado do save de Starfield e ajuda a decidir o que fazer agora."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Lucas Oliveira" }]
+keywords = ["starfield", "bethesda", "savegame", "quest-tracker"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: X11 Applications :: Qt",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+]
+dependencies = [
+    "PySide6>=6.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/lucaspwo/starfield-assistant"
+Repository = "https://github.com/lucaspwo/starfield-assistant"
+Issues = "https://github.com/lucaspwo/starfield-assistant/issues"
+
+[project.scripts]
+sfasst-cross = "sfasst.cross:main"
+sfasst-parse = "sfasst.parse_log:main"
+sfasst-skills = "sfasst.skills_report:main"
+sfasst-skill-suggestions = "sfasst.skill_suggestions:main"
+sfasst-skill-priorities = "sfasst.skill_priorities:main"
+sfasst-research = "sfasst.research_suggestions:main"
+
+[project.gui-scripts]
+sfasst-gui = "sfasst.gui.__main__:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sfasst = ["data/*.tsv", "data/external/*.txt", "data/external/*.md"]

@@ -14,6 +14,11 @@ Detalhes em [`docs/decisao-abordagem.md`](docs/decisao-abordagem.md).
 - ✅ Inventário do jogador (carry)
 - ✅ Cofre do Lodge e qualquer container estático cujo FormID seja conhecido
 - ✅ Cruzamento materiais × inventário com scoring de esforço
+- ✅ Filtro por local atual via `--here` (declaração manual — engine não
+  expõe location, ver [`docs/limitacao-localizacao.md`](docs/limitacao-localizacao.md))
+- ✅ Skills/perks com rank atual, sugestões do próximo rank por skill
+  (cruzando unlocks curados em `data/skills.tsv`) e sugestões de pesquisa
+  estáticas (cruzando pré-requisitos com `data/research.tsv`)
 - ❌ Cargo da nave — bloqueado por design do engine
   (ver [`docs/limitacao-containers.md`](docs/limitacao-containers.md))
 
@@ -36,6 +41,15 @@ Detalhes em [`docs/decisao-abordagem.md`](docs/decisao-abordagem.md).
    - Instalar conforme instruções do mod (em geral, copiar pro `Data/SFSE/plugins/`)
 3. **Inicie o jogo via `sfse_loader.exe`** (não pelo Steam direto)
 
+## Configuração local
+
+Os caminhos da instalação do jogo ficam em `.env` (não comitado).
+
+```bash
+cp .env.example .env
+$EDITOR .env   # ajustar STARFIELD_GAME_LOG e STARFIELD_SAVES_DIR
+```
+
 ## Coleta de dados (cada vez que quiser um snapshot)
 
 1. Copie [`scripts/dump.txt`](scripts/dump.txt) para a raiz do diretório do jogo
@@ -50,7 +64,23 @@ Detalhes em [`docs/decisao-abordagem.md`](docs/decisao-abordagem.md).
 ```bash
 scripts/run.sh                  # texto, com agrupamento por local
 scripts/run.sh --json           # JSON estruturado
+scripts/run.sh --here cydonia   # destaca quests do local atual ([AQUI AGORA])
+                                # e mostra ROTA RÁPIDA (top 5 por proximidade × esforço)
+scripts/run.sh --here neon --top 10  # mais quests na rota
 ```
+
+## Interface gráfica
+
+App nativo em PySide6 com 4 abas (Quests / Skills / Research / Status),
+botão **Refresh** que executa o pipeline (após você rodar `bat dump` no jogo)
+e campo **Local atual** que dispara a rota rápida por proximidade.
+
+```bash
+pip install -r requirements.txt   # primeira vez: PySide6
+scripts/gui.sh                    # abre a janela
+```
+
+Em WSL2, requer WSLg (Windows 11) para renderizar a janela nativamente.
 
 Faz tudo: copia o log do jogo, extrai só o último `bat dump`, parseia,
 detecta o save mais recente pra ler o nível e cruza tudo com inventário.

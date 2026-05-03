@@ -3,14 +3,21 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+build/
+dist/
 
-# logs e dumps locais (são pessoais)
-data/logs/*.log
-data/logs/latest.log
-data/saves/*.sfs
-data/raw/*.raw
-data/raw/*.dat
+# configuração local (paths do jogo; identifica o usuário)
+.env
+
+# dados pessoais capturados do save
+data/logs/
+data/saves/
+data/raw/
 out/
+
+# arquivos gerados a partir de fonte versionada
+src/sfasst/data/systems.tsv
+scripts/dump.txt
 
 # editores
 .idea/
