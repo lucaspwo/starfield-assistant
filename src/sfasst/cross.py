@@ -219,6 +219,52 @@ class QuestAnalysis:
     level_required: int | None          # max gate entre objetivos
     can_finish_now: bool                 # todas needs satisfeitas, só falta entregar
     bucket: str                          # "ready" | "almost" | "in_progress" | "stuck" | "level_gated"
+    location: str = "?"                  # hint de local/cidade ("Neon", "Akila", ...)
+
+
+# Heurística de localização baseada em substring de display_name + objetivos.
+# Ordem importa: matchers mais específicos primeiro.
+LOCATION_KEYWORDS: list[tuple[str, str]] = [
+    ("ryujin", "Neon (Ryujin)"),
+    ("xenofresh", "Neon (Xenofresh)"),
+    ("neonz", "Neon"),
+    ("neon_", "Neon"),
+    ("neon", "Neon"),
+    ("ffnewatlantis", "Nova Atlântida"),
+    ("nova atlântida", "Nova Atlântida"),
+    ("new atlantis", "Nova Atlântida"),
+    ("vanguarda", "Nova Atlântida (Vanguarda)"),
+    ("tuala", "Nova Atlântida (Vanguarda)"),
+    ("akila", "Akila City"),
+    ("ashta", "Akila City"),
+    ("ngodup tate", "Akila City"),
+    ("davis wilson", "Akila City"),
+    ("cydonia", "Cydonia"),
+    ("via rubra", "Cydonia"),
+    ("gennady ayton", "Cydonia (Clínica)"),
+    ("paradiso", "Paradiso"),
+    ("red mile", "Red Mile"),
+    ("frota escarlate", "The Key"),
+    ("astroleiro", "Astroleiro Stroud-Eklund"),
+    ("stroud-eklund", "Astroleiro Stroud-Eklund"),
+    ("hopetown", "Hopetown"),
+    ("vlad", "Casa do Vlad"),
+    ("kapteyn", "Sistema Kapteyn"),
+    ("altair", "Sistema Altair"),
+    ("procyon", "Sistema Procyon"),
+    ("oráculo", "Estação Oráculo"),
+    ("nirvana", "Sistema Nirvana"),
+    ("suvorov", "Suvorov"),
+    ("freya", "Sistema Freya"),
+]
+
+
+def infer_location(display_name: str, objective_descs: list[str]) -> str:
+    haystack = (display_name + " " + " ".join(objective_descs)).lower()
+    for keyword, label in LOCATION_KEYWORDS:
+        if keyword in haystack:
+            return label
+    return "?"
 
 
 def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAnalysis]:
@@ -288,6 +334,9 @@ def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAna
         else:
             bucket = "in_progress"
 
+        location = infer_location(
+            q["display_name"], [o["parsed"]["raw"] for o in ana_objs]
+        )
         out.append(QuestAnalysis(
             display_name=q["display_name"],
             instance=q["instance"],
@@ -297,6 +346,7 @@ def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAna
             level_required=max_gate,
             can_finish_now=can_finish_now,
             bucket=bucket,
+            location=location,
         ))
 
     out.sort(key=lambda a: (
@@ -348,32 +398,47 @@ def render_report(
         if not group:
             continue
         lines.append(f"── {BUCKET_LABELS[bucket]} ({len(group)}) ──")
+
+        # subagrupar por localização para favorecer rotas eficientes
+        by_loc: dict[str, list[QuestAnalysis]] = {}
         for a in group:
-            head = f"• {a.display_name}  [esforço: {a.total_cost}]"
-            if a.has_level_gate:
-                head += f"  (precisa nível {a.level_required})"
-            lines.append(head)
-            for o in a.objectives:
-                p = o["parsed"]
-                im = o["inventory_match"]
-                tag = f"[{p['cls']}]"
-                if p["optional"]:
-                    tag = "[opc] " + tag
-                line = f"    - {tag} {p['raw']}"
-                if im:
-                    by_container: dict[str, int] = {}
-                    for e in im["inventory_entries"]:
-                        by_container[e["container"]] = (
-                            by_container.get(e["container"], 0) + e["count"]
+            by_loc.setdefault(a.location, []).append(a)
+        # locais conhecidos antes do "?"; dentro de cada local, custo crescente
+        sorted_locs = sorted(
+            by_loc.keys(),
+            key=lambda x: (x == "?", x.lower()),
+        )
+
+        for loc in sorted_locs:
+            quests_here = sorted(by_loc[loc], key=lambda a: a.total_cost)
+            label = loc if loc != "?" else "Local não identificado"
+            lines.append(f"  ▸ {label} ({len(quests_here)})")
+            for a in quests_here:
+                head = f"    • {a.display_name}  [esforço: {a.total_cost}]"
+                if a.has_level_gate:
+                    head += f"  (precisa nível {a.level_required})"
+                lines.append(head)
+                for o in a.objectives:
+                    p = o["parsed"]
+                    im = o["inventory_match"]
+                    tag = f"[{p['cls']}]"
+                    if p["optional"]:
+                        tag = "[opc] " + tag
+                    line = f"        - {tag} {p['raw']}"
+                    if im:
+                        by_container: dict[str, int] = {}
+                        for e in im["inventory_entries"]:
+                            by_container[e["container"]] = (
+                                by_container.get(e["container"], 0) + e["count"]
+                            )
+                        parts = ", ".join(
+                            f"{c}: {n}" for c, n in sorted(by_container.items())
+                        ) or "—"
+                        line += (
+                            f"  → tenho [{parts}], total {im['inventory_count']}"
+                            f", falta {im['shortfall']}"
                         )
-                    parts = ", ".join(
-                        f"{c}: {n}" for c, n in sorted(by_container.items())
-                    ) or "—"
-                    line += (
-                        f"  → tenho [{parts}], total {im['inventory_count']}"
-                        f", falta {im['shortfall']}"
-                    )
-                lines.append(line)
+                    lines.append(line)
             lines.append("")
     return "\n".join(lines)
 
