@@ -1,0 +1,83 @@
+form_id	name	tree	unlock_r1	unlock_r2	unlock_r3	unlock_r4
+002C2C5A	Aneutronic Fusion	Tech	+1 ponto de poder de reator	+1 poder reator	+2 poder reator	+3 poder reator
+0027DF94	Armor Penetration	Combat
+002C5560	Astrodynamics	Tech	Grav jumps +15% alcance	+30% alcance	+50% alcance	consumo grav menor + grav jumps interestelares estendidos
+0027CBBA	Crippling	Combat
+0027CBBB	Astrophysics	Science	+1 trait por planeta inspeciona	+2 traits	+3 traits	+4 traits e fauna/flora rara revelada
+0027B9ED	Automated Weapon Systems	Tech
+002CE2C2	Ballistic Weapon Systems	Tech	+10% dano armas balísticas da nave	+20%	+30% + crit chance	máximo + bonus crit
+002CFCAB	Ballistics	Combat
+0008C3EE	Boost Assault Training	Combat	atirar enquanto boost	+dano com boost	+25% dano com boost	dano + recarga boost ao atirar
+00146C2C	Boost Pack Training	Physical	desbloqueia uso de boost packs	consumo menor + manobrabilidade	regen aéreo de boost	regen perfeito + boost duplo
+002C5557	Botany	Science	+50% recursos de plantas	+chance de raros + identifica plantas exóticas	colheita não destrói	identifica todos recursos vegetais
+002C59DF	Boxing	Physical
+0028AE14	Cellular Regeneration	Physical
+002CE2C0	Chemistry	Science	cria chems Tier 1 + benches	chems Tier 2 + duração maior	chems Tier 3	chems Tier 4 + chance de não consumir
+002C5A8E	Commerce	Social	-5% preços compra / +5% venda	-10% / +10%	-15% / +15%	-25% / +25% — comerciantes premium
+002C555E	Concealment	Physical
+002CFCAF	Deception	Social
+002CE2A0	Decontamination	Science	+resistência radiação	cura aflições mais rápido	imune a aflição leve	imune total radiação ambiente
+002C5556	Demolitions	Combat	+25% raio explosão	+50% dano explosivo	+granadas equipáveis	max bonus + chance de granada não consumir
+002C59E1	Diplomacy	Social
+002CFCB0	Dueling	Combat
+002C53B2	EM Weapon Systems	Tech
+002C59E2	Energy Weapon Dissipation	Combat
+002C59DB	Energy Weapon Systems	Tech	+10% dano armas energia da nave	+20%	+30% + drain shields	máximo
+002CE2DE	Engine Systems	Tech	+top speed nave	+top speed	+manobrabilidade	max + boost de manobrabilidade
+0028AE17	Environmental Conditioning	Physical
+002CE2DD	Fitness	Physical	+20% O2 máximo	+30% O2	+40% O2 e regen	+50% O2 e sprint custa menos
+002C5A94	Gastronomy	Science	cozinha Tier 1 (sandwiches, eggs)	Tier 2 (pratos completos)	Tier 3	Tier 4 + duração maior dos buffs
+002CE29F	Geology	Science	+50% minerais inorgânicos comuns	+raros	mining não destrói	identifica todos minerais
+0028AE29	Gymnastics	Physical
+00147E38	Heavy Weapons Certification	Combat	+10% dano armas pesadas	+25%	+50% + recarga rápida	max bonus + chance de critar
+0027DF96	Incapacitation	Combat
+002C59DE	Intimidation	Social
+002C53AE	Isolation	Social
+002C555D	Instigation	Social
+002C59DD	Lasers	Combat
+002C890D	Leadership	Social
+002C5555	Manipulation	Social
+002C890B	Marksmanship	Combat	+5% chance crítica	+10% crit + bonus dano crit	+chance recarga após crit	max bonus crit
+002C5554	Martial Arts	Physical
+002CE2DF	Medicine	Science	cura medicinal Tier 1 (Med Pack)	Tier 2 (Trauma Pack)	Tier 3	Tier 4 + cura mais 25%
+002C5558	Missile Weapon Systems	Tech
+002C555F	Negotiation	Social
+002C53B4	Neurostrikes	Combat
+002CFCAD	Nutrition	Physical
+002C59E0	Outpost Engineering	Science	estruturas Tier 1 outpost	Tier 2 (laboratórios, hidroponia)	Tier 3	Tier 4 + bonus produção
+0023826F	Outpost Management	Social
+002CFCAE	Pain Tolerance	Physical
+002C2C5B	Particle Beam Weapon Systems	Tech	+10% dano armas particle da nave	+20%	+30%	máximo
+0027BAFD	Particle Beams	Combat
+00143B6B	Payloads	Tech	+10% capacidade de carga da nave	+25%	+50%	max + cargo seguro
+002080FF	Pistol Certification	Combat	+25% dano pistolas	+35% + recarga	+50% + crit	max bonus + chance recarga após kill
+0022EC82	Persuasion	Social	+10% chance de persuadir	+15%	+25%	+30% — opções de Persuasão expostas em mais diálogos
+002CFCAC	Piloting	Tech	pilota Class A	pilota Class B + thrusters	pilota Class C	máximo + thrusters bonus
+0027CBC2	Planetary Habitation	Science	pouso em planetas Tier 2	Tier 3	Tier 4	Tier 5 (extremos)
+002C555A	Rapid Reloading	Combat
+0028AE13	Rejuvenation	Physical
+002C555C	Research Methods	Science	-10% custo materiais research	-15%	-20%	-25% + research instantânea ocasional
+002CE2E0	Rifle Certification	Combat	+25% dano rifles	+35% + +20% recarga	+50% + +10% crit	max bonus + chance recarga após kill
+002C5553	Robotics	Tech
+002CFCB1	Scanning	Science	scanner detecta mais	identifica recursos a maior alcance	identifica criaturas	máximo + scan deep
+0028B853	Scavenging	Physical
+002CE2E2	Security	Tech	Advanced locks	Expert locks	Master locks	+1 tentativa de auto-attempt + ferramentas
+002C53AF	Sharpshooting	Combat	+50% dano headshot	+crit dmg	slowdown ao mirar	max bonus headshot
+002C2C59	Shield Systems	Tech	+10% capacidade shield nave	+20%	+30%	máximo + regen
+002C53B3	Ship Command	Tech	+1 vaga de tripulação	+2	+3	+5 (max 8)
+0027DF97	Shotgun Certification	Combat	+25% dano shotguns	+35% + recarga	+50% + crit close	max bonus + chance disparo extra
+002C53B1	Sniper Certification	Combat	+25% dano sniper mirando	+35% mirando	+50% + scope hold breath	max + scope avançado
+0027CBC3	Spacesuit Design	Science	mods spacesuit Tier 1	Tier 2	Tier 3	Tier 4 + bonus
+0004CE2D	Special Projects	Science	desbloqueia research projects Tier 2	Tier 3	Tier 4	max + research raros
+002C59DC	Starship Design	Tech	+1 categoria peças spaceship	Tier 2	Tier 3	Tier 4 + peças únicas
+002AC953	Starship Engineering	Tech
+002CFCB2	Stealth	Physical	+25% efetividade stealth	+50%	inimigos esquecem mais rápido	max + stealth quase perfeito
+0027CBC1	Surveying	Science	+20m alcance scanner	+40m	+60m + scan profundo	max alcance + reveals tudo
+002C59DA	Targeting	Combat
+002C5559	Targeting Control Systems	Tech	desbloqueia targeting de subsistemas inimigos	bonus dano em sistemas	max bonus	máximo + chance disable
+002C555B	Theft	Social
+002C890C	Weapon Engineering	Science	mods de arma Tier 1	Tier 2	Tier 3	Tier 4 + bonus de mod
+002C59D9	Weight Lifting	Physical	+10kg carry	+25kg	+50kg	+100kg + sprint sem penalidade peso
+002CE2E1	Wellness	Physical	+10% HP máximo	+20% HP	+30% HP	+40% HP
+002C53B0	Xenosociology	Social
+002C5552	Zoology	Science	+50% recursos animais	+chance raros	abate não destrói	identifica todos recursos animais

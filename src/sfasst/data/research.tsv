@@ -1,0 +1,25 @@
+category	project	tier	prereq_skills	unlocks
+Weaponry	Weapon Mods 1	1	Weapon Engineering:1	Tier 1 weapon mods: Long Barrel, Compensator, Reflex Sight, Tactical Grip, Standard Magazine
+Weaponry	Weapon Mods 2	2	Weapon Engineering:2	Tier 2 weapon mods: Suppressor, Heavy Long Barrel, Magnified Scope, Recoil Dampener, Extended Magazine
+Weaponry	Weapon Mods 3	3	Weapon Engineering:3	Tier 3 weapon mods: Sniper Scope, High Velocity Barrel, AP Rounds, Stabilizing Stock
+Weaponry	Weapon Mods 4	4	Weapon Engineering:4	Tier 4 weapon mods: Penetrator Rounds, Tactical Stock, Coupled Magnetic, Hornet Nest
+Pharmacology	Healing 1	1	Medicine:1	Med Pack: cura mais que o paste padrão; receita básica de medicamentos
+Pharmacology	Healing 2	2	Medicine:2	Trauma Pack, Snake Oil
+Pharmacology	Boost Pack 1	1	Chemistry:1	Aids para boost pack (recarga e duração); chems offensivos básicos
+Pharmacology	Combat Stims 1	1	Chemistry:1	Amp, Hippolyta: buffs ofensivos temporários
+Pharmacology	Resistances 1	1	Chemistry:1|Decontamination:1	Resistências contra dano elemental e radiação (Antibiotic, Mass Tea)
+Equipment	Spacesuit Mods 1	1	Spacesuit Design:1	Mods Tier 1 de spacesuit (resistências básicas, peso reduzido)
+Equipment	Spacesuit Mods 2	2	Spacesuit Design:2	Mods Tier 2 de spacesuit (pocketed, energy drain absorption)
+Equipment	Spacesuit Mods 3	3	Spacesuit Design:3	Mods Tier 3 de spacesuit (incendiary armor, EM shielded)
+Equipment	Helmet Mods 1	1	Spacesuit Design:1	Mods Tier 1 de capacete (proteção elemental, scan)
+Equipment	Pack Mods 1	1	Spacesuit Design:1	Mods Tier 1 de boost pack (aux engine, jetpack improvements)
+Food and Drink	Recipes 1	1	Gastronomy:1	Receitas Tier 1 (Sandwiches, Eggs, comida básica com buffs leves)
+Food and Drink	Recipes 2	2	Gastronomy:2	Receitas Tier 2 (Pratos completos, comidas com buffs duradouros)
+Food and Drink	Drinks 1	1	Gastronomy:1	Bebidas Tier 1 (Coffee, Chai, Smoothies)
+Outpost Development	Habs Tier 1	1	Outpost Engineering:1	Hab modules avançados Tier 1 (estruturas modulares maiores)
+Outpost Development	Habs Tier 2	2	Outpost Engineering:2|Planetary Habitation:1	Hab modules Tier 2 (laboratórios, hidroponia)
+Outpost Development	Crops Tier 1	1	Botany:1	Plantação de fauna agrícola (cultivar inorgânicos comuns)
+Outpost Development	Industrial Tier 1	1	Outpost Engineering:1	Industrial gear: extratores, fabricators básicos
+Outpost Development	Defenses Tier 1	1	Outpost Engineering:1|Outpost Management:1	Turrets de outpost (laser, ballistic) Tier 1
+Manufacturing	Components Tier 1	1	Outpost Engineering:1	Componentes industriais Tier 1 (Adaptive Frame, Microsecond Regulator)
+Manufacturing	Components Tier 2	2	Outpost Engineering:2|Special Projects:1	Componentes Tier 2 (Aldumite, Veryl-Enhanced Plating)

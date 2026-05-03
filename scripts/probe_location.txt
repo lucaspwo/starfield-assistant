@@ -1,0 +1,34 @@
+; Sonda de comandos pra descobrir como ler a localização atual do jogador.
+; Uso: copie pra raiz do Starfield e rode no console:  bat probe_location
+; Depois envie o trecho do sfse_plugin_console.log correspondente.
+;
+; Cada linha testa um candidato. O que retornar dado útil entra no dump.txt;
+; o que retornar "Unknown variable or function" / "Syntax Error" é descartado.
+
+; --- Coordenadas (provavelmente funcionam) ---
+Player.GetPos X
+Player.GetPos Y
+Player.GetPos Z
+
+; --- Candidatos de worldspace / região / planeta ---
+Player.GetWorldspace
+Player.GetInWorldspace
+Player.GetCurrentRegion
+Player.GetPlayerRegion
+Player.GetPlanet
+Player.GetSpaceshipParentLocation
+Player.GetCurrentLocationName
+Player.GetEditorLocation
+
+; --- Predicados booleanos (retornam 0/1) ---
+Player.IsInInterior
+Player.IsInSpace
+Player.IsOnPlanet
+
+; --- Sem prefixo Player. (algumas funções globais) ---
+GetCurrentLocation
+GetInCurrentLocation
+GetWorldspace
+
+; --- Variantes via GetAVInfo / atributos ---
+Player.GetAVInfo Variable10

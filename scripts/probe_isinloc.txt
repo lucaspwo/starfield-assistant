@@ -1,0 +1,28 @@
+; Sonda: a função IsInLocation existe no console do Starfield?
+; Uso: copie pra raiz do Starfield e rode no console:  bat probe_isinloc
+;
+; Estratégia: testar variantes de nome com um FormID neutro (00000001) só
+; pra ver se o engine aceita a função. Se aceitar, retorna 0 (não bate);
+; se não aceitar, "Unknown variable or function" / "Syntax Error".
+;
+; Em paralelo testamos getincurrentloc (script command com argumento de
+; keyword/location) que em outros engines Bethesda existe.
+
+; --- Variantes de IsInLocation ---
+Player.IsInLocation 00000001
+Player.GetIsInLocation 00000001
+Player.GetInCurrentLoc 00000001
+Player.GetInCurrentLocation 00000001
+
+; --- Versões sem prefixo Player. ---
+IsInLocation 00000001
+GetIsInLocation 00000001
+GetInCurrentLoc 00000001
+
+; --- Se IsInLocation funcionar com FormID neutro, vale testar com candidatos
+;     plausíveis pra Lodge / Nova Atlântida (tente os 3 abaixo) ---
+; Lodge interior (já confirmado como cell em docs/limitacao-containers.md)
+Player.IsInLocation 0014BCEC
+; Wanderwell ship base form (provavelmente não é uma Location, mas serve de
+; teste negativo; deve retornar 0)
+Player.IsInLocation 00038B42

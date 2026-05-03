@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 import textwrap
@@ -19,6 +20,109 @@ from enum import Enum
 from pathlib import Path
 
 from sfasst.community_tips import find_tip
+
+# ──────────────────────────────────────────────────────────────────────
+# Proximidade geográfica (sistema → sistema, em anos-luz)
+# ──────────────────────────────────────────────────────────────────────
+
+from sfasst._paths import data_path
+
+SYSTEMS_TSV = data_path("systems.tsv")
+LOCATIONS_TSV = data_path("locations.tsv")
+
+
+def _load_systems() -> dict[str, tuple[float, float, float]]:
+    """starfield_system (UPPER) -> (x, y, z) em anos-luz."""
+    out: dict[str, tuple[float, float, float]] = {}
+    if not SYSTEMS_TSV.exists():
+        return out
+    for raw in SYSTEMS_TSV.read_text(encoding="utf-8").splitlines():
+        line = raw.rstrip()
+        if not line.strip() or line.startswith("starfield_system"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 4:
+            continue
+        try:
+            out[parts[0].strip().upper()] = (
+                float(parts[1]), float(parts[2]), float(parts[3])
+            )
+        except ValueError:
+            continue
+    return out
+
+
+def _load_label_to_system() -> dict[str, str]:
+    """label (lower) -> starfield_system (upper). '' = sistema desconhecido."""
+    out: dict[str, str] = {}
+    if not LOCATIONS_TSV.exists():
+        return out
+    for raw in LOCATIONS_TSV.read_text(encoding="utf-8").splitlines():
+        line = raw.rstrip()
+        if not line.strip() or line.startswith("label"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        label = parts[0].strip()
+        sys_name = parts[1].strip().upper() if len(parts) >= 2 else ""
+        out[label.lower()] = sys_name
+    return out
+
+
+# Tier de proximidade entre dois labels.
+# 0 = mesma label  •  1 = mesmo sistema  •  2 = perto (~1 jump)
+# 3 = intermediário (alguns jumps)  •  4 = longe  •  5 = sistema desconhecido
+#
+# As distâncias vêm de data/external/system_data.txt (s9w/starfield-navigator):
+# coords reconstruídas por skybox tracking, NÃO são anos-luz reais
+# (ex.: Sol→Alpha Centauri sai 42, não 4.37 ly). São consistentes entre si
+# então servem como proxy de "quão grande precisa ser o grav jump".
+PROX_NEAR_THRESHOLD = 60.0   # navigator units
+PROX_MID_THRESHOLD = 150.0
+def proximity_tier(
+    here_label: str, quest_label: str,
+    label_to_system: dict[str, str],
+    systems_xyz: dict[str, tuple[float, float, float]],
+) -> tuple[int, float | None]:
+    """Retorna (tier, distance_ly_or_None)."""
+    if not here_label or not quest_label:
+        return (5, None)
+    if quest_label == "?":
+        return (5, None)
+    a = _norm(here_label)
+    b = _norm(quest_label)
+    # AQUI = labels coincidem ou uma é substring da outra (cobre
+    # 'Cydonia (Clínica)' quando here='cydonia')
+    if a == b or (a and b and (a in b or b in a)):
+        return (0, 0.0)
+
+    here_sys = label_to_system.get(here_label.lower(), "")
+    quest_sys = label_to_system.get(quest_label.lower(), "")
+    if not here_sys or not quest_sys:
+        return (5, None)
+    if here_sys == quest_sys:
+        return (1, 0.0)
+    a = systems_xyz.get(here_sys)
+    b = systems_xyz.get(quest_sys)
+    if not a or not b:
+        return (5, None)
+    d = math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2)
+    if d <= PROX_NEAR_THRESHOLD:
+        return (2, d)
+    if d <= PROX_MID_THRESHOLD:
+        return (3, d)
+    return (4, d)
+
+
+PROXIMITY_LABELS = {
+    0: "AQUI",
+    1: "MESMO SISTEMA",
+    2: "PERTO",
+    3: "INTERMEDIÁRIO",
+    4: "LONGE",
+    5: "DESCONHECIDO",
+}
 
 # ──────────────────────────────────────────────────────────────────────
 # Classificação de objetivos (heurística sobre o texto PT-BR)
@@ -227,6 +331,9 @@ class QuestAnalysis:
     bucket: str                          # "ready" | "almost" | "in_progress" | "stuck" | "level_gated"
     location: str = "?"                  # hint de local/cidade ("Neon", "Akila", ...)
     community_tip: str | None = None     # dica curada (não derivada do save)
+    at_here: bool = False                # location bate com --here (declarado pelo usuário)
+    proximity_tier: int = 5              # 0=aqui, 1=mesmo sistema, 2=≤10ly, 3=≤30ly, 4=>30ly, 5=desconhecido
+    distance_ly: float | None = None     # None se desconhecido ou mesma label
 
 
 # Heurística de localização baseada em substring de display_name + objetivos.
@@ -388,9 +495,26 @@ def _merge_quest_blocks(quests_objectives: list[dict]) -> list[dict]:
     return [merged[k] for k in order]
 
 
-def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAnalysis]:
+def _here_matches(location: str, here: str) -> bool:
+    """Match case-insensitive entre o local declarado pelo usuário e o
+    location inferido da quest. Substring acentuado-insensível em ambos os
+    sentidos para casar 'cydonia' com 'Cydonia (Clínica)' e vice-versa."""
+    a = _norm(here)
+    b = _norm(location)
+    if not a or not b or b == "?":
+        return False
+    return a in b or b in a
+
+
+def analyze(
+    parsed_json: dict,
+    player_level: int | None = None,
+    here: str | None = None,
+) -> list[QuestAnalysis]:
     inventory = parsed_json["inventory"]
     npc_index = build_npc_to_editor_index(parsed_json.get("quests_targets", []))
+    systems_xyz = _load_systems()
+    label_to_system = _load_label_to_system()
     out: list[QuestAnalysis] = []
 
     for q in _merge_quest_blocks(parsed_json["quests_objectives"]):
@@ -476,6 +600,13 @@ def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAna
         tip: str | None = None
         if total_cost <= 5:
             tip = find_tip(q["display_name"], editor_id_hint)
+        at_here = bool(here) and _here_matches(location, here)
+        if here:
+            ptier, pdist = proximity_tier(
+                here, location, label_to_system, systems_xyz
+            )
+        else:
+            ptier, pdist = 5, None
         out.append(QuestAnalysis(
             display_name=q["display_name"],
             instance=q["instance"],
@@ -487,6 +618,9 @@ def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAna
             bucket=bucket,
             location=location,
             community_tip=tip,
+            at_here=at_here,
+            proximity_tier=ptier,
+            distance_ly=round(pdist, 1) if pdist is not None else None,
         ))
 
     out.sort(key=lambda a: (
@@ -511,10 +645,48 @@ BUCKET_LABELS = {
 }
 
 
+def render_route(analyses: list[QuestAnalysis], top: int) -> list[str]:
+    """Top N quests acionáveis ordenadas por score combinado de
+    proximidade × esforço. Cada tier de proximidade adiciona ~5 ao score
+    (1 grav jump ≈ 1 farm leve), de modo que esforço 3 fora bate esforço
+    21 em casa."""
+    PROX_WEIGHT = 5.0
+
+    def score(a: QuestAnalysis) -> float:
+        return a.total_cost + PROX_WEIGHT * a.proximity_tier
+
+    actionable = [
+        a for a in analyses
+        if a.bucket in ("ready", "almost", "in_progress")
+        and a.proximity_tier <= 4
+    ]
+    actionable.sort(key=lambda a: (score(a), a.proximity_tier, a.total_cost))
+    chosen = actionable[:top]
+    if not chosen:
+        return []
+    lines: list[str] = []
+    lines.append(f"── ROTA RÁPIDA (top {len(chosen)}, mais fáceis e próximas) ──")
+    for a in chosen:
+        prox = PROXIMITY_LABELS.get(a.proximity_tier, "?")
+        if a.distance_ly is not None and a.proximity_tier in (2, 3, 4):
+            # 'u' = unidades do navigator (não são ly reais — proxy de jump)
+            prox = f"{prox} (~{a.distance_ly:.0f}u)"
+        loc = a.location if a.location != "?" else "Local não identificado"
+        lines.append(
+            f"  • [{prox}]  {a.display_name}  "
+            f"[esforço: {a.total_cost}]  — {loc}"
+        )
+    lines.append("")
+    return lines
+
+
 def render_report(
     analyses: list[QuestAnalysis],
     player_level: int | None,
     inventory: list[dict] | None = None,
+    here: str | None = None,
+    location_context: dict | None = None,
+    top: int = 5,
 ) -> str:
     lines: list[str] = []
     lines.append("=" * 72)
@@ -526,12 +698,36 @@ def render_report(
         c = Counter(i["container"] for i in inventory)
         parts = ", ".join(f"{k} ({n})" for k, n in sorted(c.items()))
         lines.append(f"Containers dumpados: {parts}")
+    if location_context:
+        ctx_parts: list[str] = []
+        pos = location_context.get("pos") or {}
+        if pos:
+            ctx_parts.append(
+                "coords ({}, {}, {})".format(
+                    *(f"{pos.get(ax, '?'):.0f}" if isinstance(pos.get(ax), (int, float))
+                      else "?" for ax in ("X", "Y", "Z"))
+                )
+            )
+        is_int = location_context.get("is_interior")
+        if is_int is not None:
+            ctx_parts.append("interior" if is_int else "exterior")
+        is_sp = location_context.get("is_in_space")
+        if is_sp is not None:
+            ctx_parts.append("no espaço" if is_sp else "em planeta/estação")
+        if ctx_parts:
+            lines.append("Contexto: " + " • ".join(ctx_parts))
+    if here:
+        n_here = sum(1 for a in analyses if a.at_here)
+        lines.append(f"Local declarado: {here}  ({n_here} quest(s) batem)")
     lines.append("=" * 72)
     lines.append("")
     lines.append(
         "Aviso: cargo da nave e containers de outposts ainda não são dumpados."
     )
     lines.append("")
+
+    if here:
+        lines.extend(render_route(analyses, top))
 
     for bucket in ("ready", "almost", "in_progress", "stuck", "level_gated"):
         group = [a for a in analyses if a.bucket == bucket]
@@ -543,16 +739,18 @@ def render_report(
         by_loc: dict[str, list[QuestAnalysis]] = {}
         for a in group:
             by_loc.setdefault(a.location, []).append(a)
-        # locais conhecidos antes do "?"; dentro de cada local, custo crescente
-        sorted_locs = sorted(
-            by_loc.keys(),
-            key=lambda x: (x == "?", x.lower()),
-        )
+        # local atual declarado primeiro; locais conhecidos antes do "?";
+        # dentro de cada local, custo crescente
+        def _loc_key(loc: str) -> tuple:
+            has_here = any(a.at_here for a in by_loc[loc])
+            return (not has_here, loc == "?", loc.lower())
+        sorted_locs = sorted(by_loc.keys(), key=_loc_key)
 
         for loc in sorted_locs:
             quests_here = sorted(by_loc[loc], key=lambda a: a.total_cost)
             label = loc if loc != "?" else "Local não identificado"
-            lines.append(f"  ▸ {label} ({len(quests_here)})")
+            badge = "  [AQUI AGORA]" if any(a.at_here for a in quests_here) else ""
+            lines.append(f"  ▸ {label} ({len(quests_here)}){badge}")
             for a in quests_here:
                 head = f"    • {a.display_name}  [esforço: {a.total_cost}]"
                 if a.has_level_gate:
@@ -610,6 +808,13 @@ def main(argv: list[str] | None = None) -> int:
                     help="nível do jogador (pra detectar quests level-gated)")
     ap.add_argument("--from-save", type=Path, default=None,
                     help="extrai o nível do nome de um arquivo .sfs")
+    ap.add_argument("--here", type=str, default=None,
+                    help="local atual do jogador (ex.: 'cydonia', 'neon'); "
+                         "quests cujo local infere igual ganham badge "
+                         "[AQUI AGORA] e vão pro topo do bucket; também "
+                         "habilita a seção 'ROTA RÁPIDA' por proximidade.")
+    ap.add_argument("--top", type=int, default=5,
+                    help="quantidade de quests na seção ROTA RÁPIDA (default 5)")
     ap.add_argument("-j", "--json", action="store_true",
                     help="emite JSON estruturado em vez do relatório de texto")
     args = ap.parse_args(argv)
@@ -626,14 +831,23 @@ def main(argv: list[str] | None = None) -> int:
                   file=sys.stderr)
 
     parsed_json = json.loads(args.parsed.read_text(encoding="utf-8"))
-    analyses = analyze(parsed_json, player_level=level)
+    analyses = analyze(parsed_json, player_level=level, here=args.here)
+
+    location_context = {
+        "pos": parsed_json.get("player_pos") or {},
+        "is_interior": parsed_json.get("player_is_interior"),
+        "is_in_space": parsed_json.get("player_is_in_space"),
+    }
 
     if args.json:
         print(json.dumps([asdict(a) for a in analyses],
                          ensure_ascii=False, indent=2))
     else:
         print(render_report(analyses, player_level=level,
-                            inventory=parsed_json.get("inventory")))
+                            inventory=parsed_json.get("inventory"),
+                            here=args.here,
+                            location_context=location_context,
+                            top=args.top))
 
     return 0
 

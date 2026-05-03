@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SKILLS_TSV = REPO / "data" / "skills.tsv"
+SKILLS_TSV = REPO / "src" / "sfasst" / "data" / "skills.tsv"
 DUMP_TXT = REPO / "scripts" / "dump.txt"
 
 HEADER = """; Starfield console batch — dump de estado do jogador
@@ -38,6 +38,16 @@ Player.ShowInventory
 
 ; --- Nível ---
 Player.GetLevel
+
+; --- Contexto de localização ---
+; O console do Starfield não expõe getter de location/cell por nome
+; (ver docs/limitacao-localizacao.md). Capturamos só coordenadas e flags.
+; Pra filtrar quests pelo local atual, passe --here <label> ao run.sh.
+Player.GetPos X
+Player.GetPos Y
+Player.GetPos Z
+Player.IsInInterior
+Player.IsInSpace
 
 ; --- Skills (ranks atuais) ---
 ; gerado a partir de data/skills.tsv

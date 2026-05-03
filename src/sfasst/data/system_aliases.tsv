@@ -1,0 +1,17 @@
+starfield_system	match_pattern	notes
+SOL	SOL	mapeado explicitamente em system_data.txt
+ALPHA CENTAURI	ALPHA CENTAURI	mapeado explicitamente
+CHEYENNE	Xi Bootis	mapeado explicitamente
+VOLII	61 Virginis	mapeado explicitamente; Volii Alpha é um planeta deste sistema
+NARION	70 Ophiuchi	mapeado explicitamente
+PORRIMA	Porrima	mapeado explicitamente
+JAFFA	18 Scorpii	mapeado explicitamente
+SIRIUS	Sirius_HIP 32349	uso comum: Starfield mantém o nome real
+ALTAIR	Altair_HIP 97649	uso comum
+PROCYON	Procyon_HIP 37279	uso comum (Procyon A no jogo)
+VEGA	Vega_HIP 91262	uso comum
+ARCTURUS	Arcturus_HIP 69673	uso comum
+KAPTEYN	Kapteyn	uso comum (Kapteyn's Star)
+LUYTEN	Luyten	uso comum (Luyten's Star)
+BARNARD	Barnard	uso comum
+WOLF	Wolf 359	uso comum (Wolf é o sistema de Wolf 359 no jogo)

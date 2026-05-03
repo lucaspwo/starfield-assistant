@@ -49,6 +49,12 @@ RE_TGT_LINE = re.compile(
 # Player.GetPerkRank: `Perk Rank >> 0`                     (label tem espaço)
 RE_NUMERIC_RESULT = re.compile(r"^([\w\s]+?)\s*>>\s*(-?\d+(?:\.\d+)?)\b")
 
+# Player.GetPos X:        `GetPos: X >> -2054.36`
+RE_POS_RESULT = re.compile(r"^GetPos:\s*([XYZ])\s*>>\s*(-?\d+(?:\.\d+)?)")
+
+# Player.IsInInterior:    ` is not an Interior`  ou  ` is an Interior`
+RE_INTERIOR_RESULT = re.compile(r"^\s*is (not )?an Interior\s*$", re.IGNORECASE)
+
 # Player.ShowInventory:
 #   `1 - Orion (002773C8) `
 #   `1 - Spacesuit_MS04_Mantis_Helmet (0016640A)  - Worn`
@@ -139,6 +145,11 @@ class ParseResult:
     player_level: int | None = None
     player_xp_for_next_level: int | None = None
     skills: list[SkillRank] = field(default_factory=list)
+    # Contexto de localização — só coords e flags binárias, porque o console
+    # não expõe location/cell por nome (docs/limitacao-localizacao.md).
+    player_pos: dict[str, float] = field(default_factory=dict)  # {"X": ..., "Y": ..., "Z": ...}
+    player_is_interior: bool | None = None
+    player_is_in_space: bool | None = None
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -147,8 +158,9 @@ class ParseResult:
 
 
 def _load_skill_index() -> dict[str, tuple[str, str]]:
-    """Carrega data/skills.tsv → {form_id_upper: (name, tree)}."""
-    tsv = Path(__file__).resolve().parent.parent.parent / "data" / "skills.tsv"
+    """Carrega skills.tsv → {form_id_upper: (name, tree)}."""
+    from sfasst._paths import data_path
+    tsv = data_path("skills.tsv")
     out: dict[str, tuple[str, str]] = {}
     if not tsv.exists():
         return out
@@ -167,10 +179,11 @@ def parse(log_path: Path) -> ParseResult:
     lines = text.splitlines()
     skill_index = _load_skill_index()
 
-    section: str | None = None  # "quests" | "objectives" | "targets" | "inventory"
+    section: str | None = None  # "quests" | "objectives" | "targets" | "inventory" | "pos" | "interior_flag" | "numeric"
     inventory_container: str = "player"  # rótulo do container atual
     pending_perk_form_id: str | None = None  # cmd era GetPerkRank <FormID>; espera resposta
-    pending_numeric_kind: str | None = None  # "level" | "xp_next" | "perk"
+    pending_numeric_kind: str | None = None  # "level" | "xp_next" | "perk" | "in_space"
+    pending_pos_axis: str | None = None  # "X" | "Y" | "Z"
 
     quests_flags: list[QuestFlag] = []
     quests_objectives: list[QuestObjectives] = []
@@ -179,6 +192,9 @@ def parse(log_path: Path) -> ParseResult:
     skills: list[SkillRank] = []
     player_level: int | None = None
     player_xp_for_next_level: int | None = None
+    player_pos: dict[str, float] = {}
+    player_is_interior: bool | None = None
+    player_is_in_space: bool | None = None
 
     # estado para parsing multilinha
     current_quest_obj: QuestObjectives | None = None
@@ -228,6 +244,16 @@ def parse(log_path: Path) -> ParseResult:
             elif cmd_lower.endswith("getlevel"):
                 section = "numeric"
                 pending_numeric_kind = "level"
+            elif "getpos" in cmd_lower:
+                section = "pos"
+                cmd_clean = cmd.split(";", 1)[0].strip()
+                tokens = cmd_clean.split()
+                pending_pos_axis = tokens[-1].upper() if tokens else None
+            elif cmd_lower.endswith("isininterior"):
+                section = "interior_flag"
+            elif cmd_lower.endswith("isinspace"):
+                section = "numeric"
+                pending_numeric_kind = "in_space"
             elif "getperkrank" in cmd_lower:
                 section = "numeric"
                 pending_numeric_kind = "perk"
@@ -325,6 +351,8 @@ def parse(log_path: Path) -> ParseResult:
                     player_level = value
                 elif pending_numeric_kind == "xp_next":
                     player_xp_for_next_level = value
+                elif pending_numeric_kind == "in_space":
+                    player_is_in_space = bool(value)
                 elif pending_numeric_kind == "perk" and pending_perk_form_id:
                     name, tree = skill_index.get(
                         pending_perk_form_id, (pending_perk_form_id, "?")
@@ -337,6 +365,21 @@ def parse(log_path: Path) -> ParseResult:
             section = None
             pending_numeric_kind = None
             pending_perk_form_id = None
+            continue
+
+        if section == "pos":
+            m = RE_POS_RESULT.match(line)
+            if m and pending_pos_axis:
+                player_pos[pending_pos_axis] = float(m.group(2))
+            section = None
+            pending_pos_axis = None
+            continue
+
+        if section == "interior_flag":
+            m = RE_INTERIOR_RESULT.match(line)
+            if m:
+                player_is_interior = (m.group(1) is None)
+            section = None
             continue
 
     flush_quest_obj()
@@ -352,6 +395,9 @@ def parse(log_path: Path) -> ParseResult:
         player_level=player_level,
         player_xp_for_next_level=player_xp_for_next_level,
         skills=skills,
+        player_pos=player_pos,
+        player_is_interior=player_is_interior,
+        player_is_in_space=player_is_in_space,
     )
 
 

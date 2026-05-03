@@ -1,0 +1,35 @@
+; Sonda: rastreamento de projetos de pesquisa.
+; Uso: copie pra raiz do Starfield e rode no console:  bat probe_research
+;
+; Hipóteses a validar:
+; H1) Research projects são perks no engine — `GetPerkRank` retorna 0/1.
+; H2) `help "Research_" 4` (filtro form type 4 = MGEF/PERK) lista FormIDs.
+; H3) Algum sistema separado de "recipe known" tipo `IsRecipeKnown`.
+;
+; Não temos FormIDs canônicos a priori — esta sonda é descoberta.
+
+; --- H2: enumerar via help ---
+; help <query> <filter> <formtype>: filter=4 é PERK (Skyrim/Starfield)
+; A saída pode ser longa; ela vai pro console_log e a gente filtra depois.
+help "Research_" 0 PERK
+help "Research_Project" 0 PERK
+help "Project_" 0 PERK
+help "PRJ_" 0 PERK
+
+; --- H3: comandos alternativos ---
+Player.IsRecipeKnown 00000001
+Player.HasRecipe 00000001
+Player.HasResearched 00000001
+
+; --- H1: GetPerkRank com candidatos plausíveis ---
+; FormIDs documentados pela comunidade (sem garantia — sonda):
+; Research_Weaponry_Rifles_T1
+Player.GetPerkRank 0022A2E0
+; Research_Outpost_Habs_T1
+Player.GetPerkRank 0022A314
+; Research_Pharmacology_Boost_T1
+Player.GetPerkRank 0022A2C0
+; Research_FoodAndDrink_T1
+Player.GetPerkRank 0022A2D0
+; Research_Equipment_Spacesuits_T1
+Player.GetPerkRank 0022A300
