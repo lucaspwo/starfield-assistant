@@ -21,9 +21,8 @@ Player.ShowInventory
 ; documentado em docs/limitacao-containers.md.
 00266E81.ShowInventory
 
-; --- Nível e XP ---
+; --- Nível ---
 Player.GetLevel
-Player.GetXPForNextLevel
 
 ; --- Skills (ranks atuais) ---
 ; gerado a partir de data/skills.tsv

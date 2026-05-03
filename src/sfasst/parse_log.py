@@ -45,10 +45,9 @@ RE_TGT_LINE = re.compile(
     r"Intermediate Reference:\s*(\S*)\s*\(([0-9A-Fa-f]{8})\)\s*$"
 )
 
-# Player.GetLevel: `GetLevel >> 32.00`
-# Player.GetXPForNextLevel: `GetXPForNextLevel >> 200.00` (algo similar)
-# Player.GetPerkRank: `GetPerkRank >> 2.00`
-RE_NUMERIC_RESULT = re.compile(r"^(\w+)\s*>>\s*(-?\d+(?:\.\d+)?)$")
+# Player.GetLevel:    `GetLevel >> 32.00 (Difficulty: 4)`  (sufixo opcional)
+# Player.GetPerkRank: `Perk Rank >> 0`                     (label tem espaço)
+RE_NUMERIC_RESULT = re.compile(r"^([\w\s]+?)\s*>>\s*(-?\d+(?:\.\d+)?)\b")
 
 # Player.ShowInventory:
 #   `1 - Orion (002773C8) `
@@ -226,17 +225,17 @@ def parse(log_path: Path) -> ParseResult:
                     inventory_container = prefix or "player"
                 else:
                     inventory_container = "player"
-            elif "getlevel" in cmd_lower:
+            elif cmd_lower.endswith("getlevel"):
                 section = "numeric"
                 pending_numeric_kind = "level"
-            elif "getxpfornextlevel" in cmd_lower:
-                section = "numeric"
-                pending_numeric_kind = "xp_next"
             elif "getperkrank" in cmd_lower:
                 section = "numeric"
                 pending_numeric_kind = "perk"
-                # extrair o FormID do comando: "Player.GetPerkRank 002C2C5A"
-                tokens = cmd.split()
+                # extrair o FormID. O comando ecoado pode incluir um comentário
+                # inline `; <nome> [<árvore>]` — descartar tudo após `;` antes
+                # de pegar o último token.
+                cmd_clean = cmd.split(";", 1)[0].strip()
+                tokens = cmd_clean.split()
                 pending_perk_form_id = tokens[-1].upper() if tokens else None
             else:
                 section = None
