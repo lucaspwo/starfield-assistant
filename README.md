@@ -45,10 +45,12 @@ Detalhes em [`docs/decisao-abordagem.md`](docs/decisao-abordagem.md).
 4. Aguarde os comandos rodarem (saída no console)
 5. O arquivo `Data/SFSE/plugins/sfse_plugin_console.log` agora contém o snapshot
 
-## Parsing
+## Pipeline (atalho)
 
-(em construção — ver tasks)
+```bash
+scripts/run.sh                  # texto, com agrupamento por local
+scripts/run.sh --json           # JSON estruturado
+```
 
-```
-python -m sfasst.parse_log "/mnt/c/.../sfse_plugin_console.log"
-```
+Faz tudo: copia o log do jogo, extrai só o último `bat dump`, parseia,
+detecta o save mais recente pra ler o nível e cruza tudo com inventário.

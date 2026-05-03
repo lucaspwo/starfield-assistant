@@ -6,6 +6,7 @@ venv/
 
 # logs e dumps locais (são pessoais)
 data/logs/*.log
+data/logs/latest.log
 data/saves/*.sfs
 data/raw/*.raw
 data/raw/*.dat
