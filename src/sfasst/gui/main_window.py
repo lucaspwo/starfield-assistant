@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit, QPushButton, QStatusBar, QTabWidget, QToolBar, QWidget,
 )
 
+from sfasst._config import load_env, sfse_loader_path
 from sfasst.gui.tabs.quests import QuestsTab
 from sfasst.gui.tabs.research import ResearchTab
 from sfasst.gui.tabs.skills import SkillsTab
@@ -85,6 +86,16 @@ class MainWindow(QMainWindow):
         self.act_open = QAction("Abrir JSON…", self)
         self.act_open.triggered.connect(self._on_open_json)
         tb.addAction(self.act_open)
+
+        tb.addSeparator()
+
+        self.act_launch = QAction("Iniciar jogo (SFSE)", self)
+        self.act_launch.setToolTip(
+            "Lança sfse_loader.exe (resolvido a partir de STARFIELD_GAME_LOG "
+            "ou STARFIELD_SFSE_LOADER no .env). Detached — não bloqueia."
+        )
+        self.act_launch.triggered.connect(self._on_launch_sfse)
+        tb.addAction(self.act_launch)
 
         tb.addSeparator()
 
@@ -204,6 +215,29 @@ class MainWindow(QMainWindow):
         self.log.verticalScrollBar().setValue(
             self.log.verticalScrollBar().maximum()
         )
+
+    def _on_launch_sfse(self) -> None:
+        cfg = load_env()
+        loader = sfse_loader_path(cfg)
+        if loader is None:
+            QMessageBox.warning(
+                self, "sfse_loader.exe não encontrado",
+                "Não consegui resolver o caminho do sfse_loader.\n\n"
+                "Configure STARFIELD_GAME_LOG no .env (e o loader é "
+                "derivado da raiz do jogo) ou defina explicitamente "
+                "STARFIELD_SFSE_LOADER apontando pro .exe."
+            )
+            return
+        ok = QProcess.startDetached(str(loader), [], str(loader.parent))
+        if not ok:
+            QMessageBox.critical(
+                self, "Falha ao lançar",
+                f"QProcess não conseguiu iniciar:\n{loader}\n\n"
+                "Em WSL, certifique-se que o interop com Windows está ativo "
+                "(arquivos .exe em /mnt/c devem ser executáveis transparentemente)."
+            )
+            return
+        self.statusBar().showMessage(f"Lançado: {loader.name}", 5000)
 
     def _on_proc_finished(self, code: int, _status: object) -> None:
         self.act_refresh.setEnabled(True)

@@ -57,13 +57,13 @@ sem texto se `--show-uncurated` for usado. Expandir conforme demanda.
 - Inferência de localização (`681c7e2`) parece estável; revisitar só se
   surgir caso onde agrupamento por local falha.
 
-## v1.1 (próxima)
-
-- **Botão "Iniciar jogo via sfse_loader"** na toolbar da GUI: spawn do
-  `sfse_loader.exe` (caminho relativo a `STARFIELD_GAME_LOG`) via
-  `QProcess.startDetached`. Não bloqueia a janela do assistente.
-
 ## Concluído
+
+- **v1.1: Botão "Iniciar jogo (SFSE)" na toolbar da GUI** — resolve
+  `sfse_loader.exe` a partir de `STARFIELD_GAME_LOG` (sobe 4 níveis
+  até a raiz do jogo) ou de override `STARFIELD_SFSE_LOADER`. Lançamento
+  via `QProcess.startDetached`. Helper `sfasst._config.load_env`
+  procura `.env` no repo (modo dev) e em `~/.config/starfield-assistant/.env`.
 
 - **Filtro de quests por local atual via `--here <label>`** —
   console não expõe nome de location (ver
