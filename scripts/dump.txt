@@ -11,11 +11,15 @@ ShowQuestTargets
 ; --- Inventário do jogador ---
 Player.ShowInventory
 
-; --- Cargo da nave principal ---
-; RefID dinâmico (FF...) — válido enquanto este save estiver carregado.
-; Trocar se mudar de nave / fizer NG+. Como descobrir: console + clicar no
-; container, ler RefID no topo da tela.
-FF02FF39.ShowInventory
+; --- Containers extras ---
+; Para adicionar containers: descobrir o RefID mirando no container com o
+; console aberto (ID aparece no topo da tela). Refs estáticas começam com
+; "00" e são estáveis entre saves; refs dinâmicas começam com "FF" e
+; podem mudar (NG+, troca de nave).
 
-; Marcador de fim para o parser detectar término do dump
-echo === STARFIELD_ASSISTANT_DUMP_END ===
+; Cofre do quarto pessoal no The Lodge (Nova Atlântida)
+0014BCEC.ShowInventory
+
+; Cargo da nave: ainda não suportado — `<ShipRef>.ShowInventory` retorna
+; vazio porque o cargo é acessado via menu da nave (não via seleção de
+; ref). Resolver no futuro requer um script Papyrus dedicado.
