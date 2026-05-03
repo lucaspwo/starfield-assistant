@@ -12,10 +12,13 @@ import argparse
 import json
 import re
 import sys
+import textwrap
 import unicodedata
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
+
+from sfasst.community_tips import find_tip
 
 # ──────────────────────────────────────────────────────────────────────
 # Classificação de objetivos (heurística sobre o texto PT-BR)
@@ -220,6 +223,7 @@ class QuestAnalysis:
     can_finish_now: bool                 # todas needs satisfeitas, só falta entregar
     bucket: str                          # "ready" | "almost" | "in_progress" | "stuck" | "level_gated"
     location: str = "?"                  # hint de local/cidade ("Neon", "Akila", ...)
+    community_tip: str | None = None     # dica curada (não derivada do save)
 
 
 # Heurística de localização baseada em substring de display_name + objetivos.
@@ -429,10 +433,24 @@ def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAna
 
         objective_descs = [o["parsed"]["raw"] for o in ana_objs]
         location = infer_location(q["display_name"], objective_descs)
+        editor_id_hint: str | None = None
         if location == "?":
-            refined = refine_location_via_targets(objective_descs, npc_index)
-            if refined:
-                location = refined
+            # Busca editor_id do NPC pra refinar local E pra pesquisar dica.
+            text = " ".join(objective_descs).lower()
+            for npc_key, eid in sorted(
+                npc_index.items(), key=lambda kv: -len(kv[0])
+            ):
+                if len(npc_key) >= 4 and npc_key in text.replace(" ", ""):
+                    editor_id_hint = eid
+                    refined = infer_location_from_editor_id(eid)
+                    if refined:
+                        location = refined
+                    break
+
+        # Dica da comunidade só pra quests viáveis (custo ≤ 5)
+        tip: str | None = None
+        if total_cost <= 5:
+            tip = find_tip(q["display_name"], editor_id_hint)
         out.append(QuestAnalysis(
             display_name=q["display_name"],
             instance=q["instance"],
@@ -443,6 +461,7 @@ def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAna
             can_finish_now=can_finish_now,
             bucket=bucket,
             location=location,
+            community_tip=tip,
         ))
 
     out.sort(key=lambda a: (
@@ -514,6 +533,13 @@ def render_report(
                 if a.has_level_gate:
                     head += f"  (precisa nível {a.level_required})"
                 lines.append(head)
+                if a.community_tip:
+                    wrapped = textwrap.fill(
+                        a.community_tip, width=72,
+                        initial_indent="        ↳ dica: ",
+                        subsequent_indent="                ",
+                    )
+                    lines.append(wrapped)
                 for o in a.objectives:
                     p = o["parsed"]
                     im = o["inventory_match"]
