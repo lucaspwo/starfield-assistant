@@ -249,6 +249,15 @@ LOCATION_KEYWORDS: list[tuple[str, str]] = [
     ("stroud-eklund", "Astroleiro Stroud-Eklund"),
     ("hopetown", "Hopetown"),
     ("vlad", "Casa do Vlad"),
+    # quests de Constellation / Lodge
+    ("vislumbres", "Constellation"),
+    ("descoberta", "Constellation"),
+    # quests específicas com NPCs conhecidos
+    ("toft", "Nova Atlântida (UC Vanguarda)"),
+    ("darvish", "Paradiso"),
+    ("primeiro contato", "Paradiso (Porrima II)"),
+    ("artilheiros", "Frota Escarlate (espaço)"),
+    ("topo da lici", "Shattered Space (Dazra)"),
     ("kapteyn", "Sistema Kapteyn"),
     ("altair", "Sistema Altair"),
     ("procyon", "Sistema Procyon"),
@@ -267,8 +276,92 @@ def infer_location(display_name: str, objective_descs: list[str]) -> str:
     return "?"
 
 
+# Heurística sobre o editor_id da quest (mais confiável que o display_name)
+# pra resolver "Indicador Adicional" e quests genéricas via target ref_name.
+EDITOR_ID_KEYWORDS: list[tuple[str, str]] = [
+    ("ffneon", "Neon"),
+    ("city_neon", "Neon"),
+    ("ffcydonia", "Cydonia"),
+    ("city_cy", "Cydonia"),
+    ("ffparadiso", "Paradiso"),
+    ("ffakila", "Akila City"),
+    ("city_akila", "Akila City"),
+    ("city_na", "Nova Atlântida"),
+    ("ffnewatlantis", "Nova Atlântida"),
+    ("uc01_tuala", "Nova Atlântida (Vanguarda)"),
+    ("ffnewhomestead", "New Homestead"),
+    ("ffhopetown", "Hopetown"),
+    ("cf01", "The Key"),
+    ("cf02", "The Key"),
+    ("cf03", "The Key"),
+    ("cf06", "The Key"),
+    ("cfsd", "Frota Escarlate (campo)"),
+    ("ffkey", "The Key"),
+    ("fc05", "Akila City (Rangers)"),
+    ("ms02", "Akila City"),
+    ("ri01", "Red Mile"),
+    ("sfter", "Cidade Esquecida"),
+    ("sfbgs001", "Va'ruun (Shattered Space)"),
+    ("mqmisc", "Constellation (Lodge)"),
+    ("ms05", "Constellation (Lodge)"),
+    ("mb_survey", "Surveys de planeta"),
+]
+
+
+def infer_location_from_editor_id(editor_id: str) -> str | None:
+    eid = editor_id.lower()
+    for keyword, label in EDITOR_ID_KEYWORDS:
+        if eid.startswith(keyword) or keyword in eid:
+            return label
+    return None
+
+
+def build_npc_to_editor_index(
+    quests_targets: list[dict],
+) -> dict[str, str]:
+    """ref_name normalizado (sem 'REF' final) -> editor_id da quest."""
+    out: dict[str, str] = {}
+    for t in quests_targets:
+        eid = t["editor_id"]
+        for tgt in t["targets"]:
+            nm = tgt.get("ref_name") or ""
+            if not nm:
+                continue
+            # MitchBenjaminREF -> mitchbenjamin; Neon_TevinAnastasREF -> tevinanastas
+            key = nm.lower()
+            for suffix in ("refduplicate000", "ref"):
+                if key.endswith(suffix):
+                    key = key[: -len(suffix)]
+            # tirar prefixo "neon_", "fc_", etc.
+            for prefix in ("neon_", "fc_", "ms02_", "uc_"):
+                if key.startswith(prefix):
+                    key = key[len(prefix):]
+            out[key] = eid
+    return out
+
+
+def refine_location_via_targets(
+    objective_descs: list[str], npc_index: dict[str, str]
+) -> str | None:
+    """Acha um NPC mencionado no objetivo no índice e infere local pelo
+    editor_id da quest correspondente."""
+    text = " ".join(objective_descs).lower()
+    # ordenar por tamanho decrescente pra evitar substring boba
+    for npc_key, eid in sorted(npc_index.items(), key=lambda kv: -len(kv[0])):
+        if len(npc_key) < 4:  # evita falsos positivos com siglas curtas
+            continue
+        # transformar "mitchbenjamin" em "mitch benjamin" pra casar texto livre
+        # estratégia simples: match de cada token de pelo menos 4 chars
+        if npc_key in text.replace(" ", ""):
+            loc = infer_location_from_editor_id(eid)
+            if loc:
+                return loc
+    return None
+
+
 def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAnalysis]:
     inventory = parsed_json["inventory"]
+    npc_index = build_npc_to_editor_index(parsed_json.get("quests_targets", []))
     out: list[QuestAnalysis] = []
 
     for q in parsed_json["quests_objectives"]:
@@ -334,9 +427,12 @@ def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAna
         else:
             bucket = "in_progress"
 
-        location = infer_location(
-            q["display_name"], [o["parsed"]["raw"] for o in ana_objs]
-        )
+        objective_descs = [o["parsed"]["raw"] for o in ana_objs]
+        location = infer_location(q["display_name"], objective_descs)
+        if location == "?":
+            refined = refine_location_via_targets(objective_descs, npc_index)
+            if refined:
+                location = refined
         out.append(QuestAnalysis(
             display_name=q["display_name"],
             instance=q["instance"],
