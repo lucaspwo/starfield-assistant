@@ -160,9 +160,12 @@ class InventoryMatch:
     can_complete_now: bool = False
 
     def __post_init__(self) -> None:
-        self.shortfall = max(
-            0, self.needed - self.have_in_objective - self.inventory_count
-        )
+        # IMPORTANTE: o counter da quest (have_in_objective) já reflete o que
+        # está no inventário do jogador — somar duplicaria. Usar o maior dos
+        # dois é defensivo: cobre o caso de o counter estar stale e o caso
+        # comum em que ambos coincidem.
+        progress = max(self.have_in_objective, self.inventory_count)
+        self.shortfall = max(0, self.needed - progress)
         self.can_complete_now = self.shortfall == 0
 
 
@@ -363,12 +366,34 @@ def refine_location_via_targets(
     return None
 
 
+def _merge_quest_blocks(quests_objectives: list[dict]) -> list[dict]:
+    """Junta múltiplos blocos `== Display ==` da mesma quest (mesmo display_name
+    + instance) num único registro. O jogo emite um bloco por objetivo em
+    quests com várias linhas de gather (ex.: 'Primeiro Contato' tem 4 blocos,
+    um por material). Sem o merge, cada bloco é tratado como quest separada e
+    pode parecer 'pronta' mesmo com objetivos pendentes em outro bloco."""
+    merged: dict[tuple[str, int], dict] = {}
+    order: list[tuple[str, int]] = []
+    for q in quests_objectives:
+        key = (q["display_name"], q["instance"])
+        if key not in merged:
+            merged[key] = {
+                "display_name": q["display_name"],
+                "instance": q["instance"],
+                "objectives": list(q["objectives"]),
+            }
+            order.append(key)
+        else:
+            merged[key]["objectives"].extend(q["objectives"])
+    return [merged[k] for k in order]
+
+
 def analyze(parsed_json: dict, player_level: int | None = None) -> list[QuestAnalysis]:
     inventory = parsed_json["inventory"]
     npc_index = build_npc_to_editor_index(parsed_json.get("quests_targets", []))
     out: list[QuestAnalysis] = []
 
-    for q in parsed_json["quests_objectives"]:
+    for q in _merge_quest_blocks(parsed_json["quests_objectives"]):
         # só nos interessam quests com objetivos DISPLAYED (no journal)
         active = [o for o in q["objectives"] if o["status"] == "DISPLAYED"]
         if not active:
