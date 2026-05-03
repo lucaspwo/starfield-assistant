@@ -38,6 +38,21 @@ ativador → container via `GetLinkedRef`. Quando `ShowInventory` falha
 silenciosamente, vale procurar o FormID do container real em wikis
 ou via xEdit/SF1Edit.
 
+### Tentativa via base form da nave (Wanderwell `00038B42`) — REJEITADA
+
+Em alguns casos a comunidade documenta o FormID **base** de uma nave
+(ex.: Wanderwell `00038B42`). Testamos `00038B42.ShowInventory` como
+último recurso; o engine respondeu:
+
+```
+Syntax error.  Invalid reference '00038B42' (only object references
+and reference variables are allowed in this context).
+```
+
+Confirmando que base forms (templates) não aceitam comandos de inventário.
+Apenas references (em runtime) os aceitam — e a ref do casco da nave já
+falhou silenciosamente em outra tentativa.
+
 ### Cargo da nave — BLOQUEADO POR DESIGN
 
 Investigação no [Papyrus Index](https://papyrus.bellcube.dev/starfield/script/spaceshipreference/)
