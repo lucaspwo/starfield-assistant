@@ -168,7 +168,7 @@ def render(
     lines.append("")
 
     # Painel de gates por árvore
-    lines.append("Status das árvores:")
+    lines.append("Status das árvores (ranks atuais; gate = SP gastos):")
     for tree in ("Combat", "Physical", "Science", "Social", "Tech"):
         ts = statuses.get(tree)
         if ts is None:
@@ -179,9 +179,15 @@ def render(
             line = (
                 f"  {tree:<10}  {ts.total_ranks:>2} ranks  •  "
                 f"Tier {ts.tier_unlocked} ativo  •  "
-                f"faltam {ts.points_to_next_gate} pra Tier {ts.tier_unlocked+1}"
+                f"~{ts.points_to_next_gate} ponto(s) pra Tier {ts.tier_unlocked+1}"
             )
         lines.append(line)
+    lines.append(
+        "Nota: skill magazines dão +1 rank sem gastar SP, então o número"
+    )
+    lines.append(
+        "real pra abrir o tier pode ser maior (ranks ≥ SPs realmente gastos)."
+    )
     lines.append("")
 
     if not chosen:
