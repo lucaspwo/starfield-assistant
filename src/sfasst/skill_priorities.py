@@ -24,8 +24,11 @@ from pathlib import Path
 from sfasst.skill_suggestions import load_skills, MAX_RANK
 
 # Gates do Starfield: ranks investidos numa árvore pra desbloquear o próximo
-# tier de skills daquela árvore.
-TIER_GATES = [4, 8, 12]  # tier 2 abre em 4, tier 3 em 8, tier 4 em 12
+# tier de skills daquela árvore. Confirmado in-game pelo usuário (2026):
+# - Tier 2 abre com 2 ranks
+# - Tier 3 abre com 4 ranks (mais 2 a partir do gate anterior)
+# Tier 4 ainda não foi confirmado in-game; assumimos +2 pelo padrão linear.
+TIER_GATES = [2, 4, 6]
 
 
 @dataclass
