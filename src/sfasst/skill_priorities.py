@@ -23,12 +23,15 @@ from pathlib import Path
 
 from sfasst.skill_suggestions import load_skills, MAX_RANK
 
-# Gates do Starfield: ranks investidos numa árvore pra desbloquear o próximo
-# tier de skills daquela árvore. Confirmado in-game pelo usuário (2026):
-# - Tier 2 abre com 2 ranks
-# - Tier 3 abre com 4 ranks (mais 2 a partir do gate anterior)
-# Tier 4 ainda não foi confirmado in-game; assumimos +2 pelo padrão linear.
-TIER_GATES = [2, 4, 6]
+# Gates do Starfield: skill points gastos numa árvore pra desbloquear o
+# próximo tier. Confirmado por documentação (games.gg, game8):
+#   "Reaching tier 2 requires spending 4 skill points in that category,
+#    tier 3 requires 8, and tier 4 requires 12."
+# Cada rank de uma skill custa 1 SP (rank 1 abre a skill; ranks 2/3/4
+# exigem completar o challenge + gastar mais 1 SP). Logo, rank atual de
+# cada skill == SPs gastos nela, e a soma dos ranks por árvore é o total
+# de SPs gastos naquela árvore.
+TIER_GATES = [4, 8, 12]
 
 
 @dataclass

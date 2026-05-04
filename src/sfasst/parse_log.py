@@ -189,7 +189,10 @@ def parse(log_path: Path) -> ParseResult:
     quests_objectives: list[QuestObjectives] = []
     quests_targets: list[QuestTargetGroup] = []
     inventory: list[InventoryItem] = []
-    skills: list[SkillRank] = []
+    # Skills indexadas por form_id pra deduplicar caso o log tenha mais de
+    # um `bat dump` empilhado (cada invocação repete o bloco GetPerkRank).
+    # Mantemos a última leitura — é a mais recente.
+    skills_by_id: dict[str, SkillRank] = {}
     player_level: int | None = None
     player_xp_for_next_level: int | None = None
     player_pos: dict[str, float] = {}
@@ -357,10 +360,10 @@ def parse(log_path: Path) -> ParseResult:
                     name, tree = skill_index.get(
                         pending_perk_form_id, (pending_perk_form_id, "?")
                     )
-                    skills.append(SkillRank(
+                    skills_by_id[pending_perk_form_id] = SkillRank(
                         form_id=pending_perk_form_id,
                         name=name, tree=tree, rank=value,
-                    ))
+                    )
             # após receber a resposta numérica, dessa "subseção" se foi
             section = None
             pending_numeric_kind = None
@@ -394,7 +397,7 @@ def parse(log_path: Path) -> ParseResult:
         inventory=inventory,
         player_level=player_level,
         player_xp_for_next_level=player_xp_for_next_level,
-        skills=skills,
+        skills=list(skills_by_id.values()),
         player_pos=player_pos,
         player_is_interior=player_is_interior,
         player_is_in_space=player_is_in_space,
